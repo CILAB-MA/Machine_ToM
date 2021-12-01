@@ -11,6 +11,7 @@ from utils.dataset import ToMDataset
 from experiment2.store_trajectories import Storage
 from utils.visualize import *
 from utils.utils import *
+import config
 
 from torch.utils.data import DataLoader
 
@@ -31,7 +32,7 @@ def make_pool(num_agent, alpha, move_penalty):
                 'But we get the {}. Also check num_agent'.format(type(alpha)))
     return population
 
-def tom_train(tom_nets, optims, env, population, is_active, method_type,
+def train(tom_nets, optims, env, population, is_active, method_type,
               num_past, num_step, num_epoch, batch_size, dicts):
 
     storage = Storage(env, population, num_past, num_step=num_step)
@@ -109,7 +110,7 @@ def tom_train(tom_nets, optims, env, population, is_active, method_type,
 
     return tom_nets, save_path
 
-def tom_evaluate(tom_net, env, population, save_path,
+def evaluate(tom_net, env, population, save_path,
                  num_past, num_step, num_iteration, batch_size, dicts):
 
     storage = Storage(env, population, num_past, num_step=num_step)
@@ -152,15 +153,15 @@ def run_experiment(num_epoch, sub_experiment, batch_size, lr, num_eval, experime
 
     population = make_pool(sub_experiment, exp_kwargs['move_penalty'])
 
-
     env = GridWorldEnv(env_kwargs)
 
     tom_net = model.PredNet(**model_kwargs)
     if model_kwargs['device'] == 'cuda':
         tom_net = tom_net.cuda()
 
+    storage = Storage()
     optimizer = optim.Adam(tom_net)
-    train()
-    evaluate()
+    train(optimizer, tom_net, storage, num_epoch, batch_size, lr, num_eval, experiment_folder)
+    evaluate(tom_net, storage, num_epoch, batch_size, lr, num_eval, experiment_folder)
 
 
