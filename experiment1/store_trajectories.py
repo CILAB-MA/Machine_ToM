@@ -1,5 +1,4 @@
 import numpy as np
-import cv2
 import copy
 
 
@@ -19,10 +18,7 @@ class Storage(object):
         for agent_index, agent in enumerate(self.population):
 
             for past_epi in range(self.num_past):
-                if not custom_env == None:
-                    obs = self.env.reset(custom=custom_env[agent_index])
-                else:
-                    obs = self.env.reset()
+                obs = self.env.reset()
 
                 # gathering past trajectories
                 for step in range(self.env.epi_max_step):
@@ -47,7 +43,17 @@ class Storage(object):
                 self.current_state[agent_index] = curr_obs
                 self.target_action[agent_index, target_action] = 1
 
-        return self.past_trajectories, self.current_state, self.target_action, self.dones
+        return dict(episode=self.past_trajectories,
+                    curr_state=self.current_state,
+                    target_action=self.target_action,
+                    dones=self.dones)
+
+    def reset(self):
+        self.past_trajectories = np.zeros(self.past_trajectories)
+        self.current_state = np.zeros(self.current_state)
+        self.target_action = np.zeros(self.target_action)
+        self.dones = np.zeros(self.dones)
+        self.action_count = np.zeros(self.action_count)
 
     def get_most_act(self):
         action_count = copy.deepcopy(self.action_count)

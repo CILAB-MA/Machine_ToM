@@ -1,121 +1,74 @@
-import agent
-import numpy as np
 from environment.env import GridWorldEnv
-import torch.optim as optim
-from model.model1 import PredNet
-from dateutil.tz import gettz
-import datetime as dt
-import torch as tr
-from utils.dataset import ToMDatasetExp1
+from experiment1 import model
 from experiment1.store_trajectories import Storage
+from experiment1.config import get_configs
+
 from utils.visualize import *
+from utils import utils
+from utils import dataset
+
 from torch.utils.data import DataLoader
+import torch as tr
+import torch.optim as optim
 
-config = 'random'
-agent = agent.agent_type[config]
-now = dt.datetime.now(gettz('Asia/Seoul'))
-year, month, day, hour, sec = str(now.year)[-2:], now.month, now.day, now.hour, now.second
+def train(tom_net, optimizer, train_loader, eval_loader, dicts):
 
+    for epoch in range(dicts['num_epoch']):
+        results = tom_net.train(train_loader, optimizer)
+        acc, loss = results
 
-def make_pool(num_agent, alpha):
-    population = []
-    if (type(alpha) == int) or (type(alpha) == float):
-        for _ in range(num_agent):
-            population.append(agent(alpha=alpha, num_action=5))
-    elif type(alpha) == list:
-        for i, group in enumerate(num_agent):
-            for _ in range(group):
-                population.append(agent(alpha=alpha[i], num_action=5))
-    else:
-        assert ('Your alpha type is not proper type. We expect list, int or float. '
-                'But we get the {}. Also check num_agent'.format(type(alpha)))
-    return population
+        ev_results = evaluate(tom_net, eval_loader, dicts)
 
+        if epoch % dicts['save_freq'] == 0:
+            save_path = utils.save_model(tom_net, )
 
-def save_model(model, alpha, epoch):
+    # TODO: ADD THE VISUALIZE PART
+    # TODO: ADD THE TENSORBOARD
 
-    global year, month, day, hour, sec
+def evaluate(tom_net, eval_loader, dicts):
 
-    foldername = '{}_{}_{}_{}_{}'.format(year, month, day, hour, sec)
-    if not os.path.exists('../results/checkpoints/{}'.format(foldername)):
-        os.makedirs('../results/checkpoints/{}'.format(foldername))
-    filename = 'model_alpha_{}_epoch_{}.pth'.format(alpha, epoch)
-    tr.save(model, '../results/checkpoints/{}/{}'.format(foldername, filename))
-    return '../results/checkpoints/{}'.format(foldername)
+    with tr.no_grad():
+         ev_res = tom_net.evaluate(eval_loader)
 
+    # TODO : ADD THE VISUALIZE PART
+    # TODO : ADD THE TENSORBOARD
 
-def tom_train(tom_nets, num_past, optims, env, alphas, num_epoch):
-    for past in num_past:
-        storage = Storage(env, population, past, step=1)
-        past_trajectories, current_state, target_action, dones = storage.extract()
-        losses = []
-        accs = []
-        for a in range(6):
-            same_alpha_past_traj = past_trajectories[1000 * a:1000 * (a + 1)]
-            same_alpha_curr_state = current_state[1000 * a:1000 * (a + 1)]
-            same_alpha_target = target_action[1000 * a:1000 * (a + 1)]
-            tom_dataset = ToMDatasetExp1(same_alpha_past_traj, same_alpha_curr_state, same_alpha_target)
-            dataloader = DataLoader(tom_dataset, batch_size=16, shuffle=True, num_workers=8)
-            tom_net = tom_nets[a]
-            optim = optims[a]
-            losses.append([])
-            accs.append([])
-            for e in range(num_epoch):
-                acc, loss = tom_net.train(dataloader, optim)
-                if e % 10 == 0:
-                    save_path = save_model(tom_net, a, e)
-                print(a, e, round(loss, 5), round(acc, 5))
-                losses[a].append(loss)
-                accs[a].append(acc)
-        get_train_figure(losses, alphas, save_path, filename='loss_train_{}.jpg'.format(past))
-        get_train_figure(accs, alphas, save_path, filename='accs_train_{}.jpg'.format(past))
+def run_experiment(num_epoch, main_experiment, sub_experiment, batch_size, lr,
+                   num_eval, experiment_folder, alpha):
 
-    return tom_nets
+    exp_kwargs, env_kwargs, model_kwargs, agent_kwargs = get_configs(sub_experiment)
+    population = utils.make_pool(sub_experiment, exp_kwargs['move_penalty'], alpha)
+    env = GridWorldEnv(env_kwargs)
+    tom_net = model.PredNet(**model_kwargs)
 
+    if model_kwargs['device'] == 'cuda':
+        tom_net = tom_net.cuda()
+    dicts = dict(main=main_experiment, sub=sub_experiment, alpha=alpha, batch_size=batch_size,
+                 lr=lr, num_epoch=num_epoch)
 
-def tom_evaluate(tom_nets, num_past, env, alphas):
-    for past in num_past:
-        storage = Storage(env, population, past, step=1)
-        past_trajectories, current_state, target_action, dones = storage.extract()
-        most_action_index, most_action_count = storage.get_most_act()
-        losses = [[] for _ in range(6)]
-        accs = [[] for _ in range(6)]
-        for a in range(6):
-            same_alpha_past_traj = past_trajectories[1000 * a:1000 * (a + 1)]
-            same_alpha_curr_state = current_state[1000 * a:1000 * (a + 1)]
-            same_alpha_target = target_action[1000 * a:1000 * (a + 1)]
-            tom_dataset = ToMDatasetExp1(same_alpha_past_traj, same_alpha_curr_state, same_alpha_target)
-            dataloader = DataLoader(tom_dataset, batch_size=1000, shuffle=False, num_workers=8)
-            e_chars = []
-            for i, tom_net in enumerate(tom_nets):
-                acc, loss, e_char = tom_net.evaluate(dataloader)
-                losses[i].append(loss)
-                accs[i].append(acc)
-                e_chars.append(e_char.detach().cpu().numpy())
-        e_chars = np.concatenate(e_chars, axis=0)
-        foldername = '{}_{}_{}_{}_{}'.format(year, month, day, hour, sec)
-        save_path = '../results/checkpoints/{}'.format(foldername)
-        get_test_figure(losses, alphas, save_path, filename='loss_eval_{}.jpg'.format(past))
-        get_test_figure(accs, alphas, save_path, filename='accs_eval_{}.jpg'.format(past))
-        visualize_embedding(e_chars, most_action_index, most_action_count, save_path,
-                            filename='e_char_{}.jpg'.format(past))
+    # Make the Dataset
+    train_storage = Storage(env)
+    eval_storage = Storage(env)
+    train_data = train_storage.extract()
+    train_data['exp'] = 'exp1'
+    eval_data = eval_storage.extract()
+    eval_data['exp'] = 'exp1'
+    train_dataset = dataset.ToMDataset(**train_data)
+    eval_dataset = dataset.ToMDataset(**eval_data)
+    train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
+    eval_loader = DataLoader(eval_dataset, batch_size=len(eval_dataset), shuffle=False)
+
+    # Train
+    optimizer = optim.Adam(tom_net.parameters(), lr=lr)
+    train(tom_net, optimizer, population, train_loader, eval_loader, dicts)
+
+    # Test
+    eval_storage.reset()
+    test_data = eval_storage.extract()
+    test_data['exp'] = 'exp1'
+    test_dataset = dataset.ToMDataset(**test_data)
+    test_loader = DataLoader(test_dataset, batch_size=len(test_dataset), shuffle=False)
+    evaluate(tom_net, test_loader, dicts)
 
 
-if __name__ == '__main__':
-    tom_nets = [PredNet(num_past=1, num_input=11, device='cuda').cuda()
-                for _ in range(6)]
-    optims = [optim.Adam(tom_nets[i].parameters(), lr=1e-4)
-              for i in range(6)]
-
-    # Since there are no prefer, we do not select preference
-    env_config = dict(height=11, width=11, pixel_per_grid=8,
-                      preference=100, exp=1, save=True)
-    population = make_pool([1000] * 6, [0.01, 0.03, 0.1, 0.3, 1, 3])
-    num_past = np.arange(10, 11)
-    env = GridWorldEnv(env_config)
-    num_epoch = 100
-    alphas = [0.01, 0.03, 0.1, 0.3, 1, 3]
-
-    tom_nets = tom_train(tom_nets, num_past, optims, env, alphas, num_epoch)
-    tom_evaluate(tom_nets, num_past, env, alphas)
 
