@@ -43,17 +43,17 @@ class Storage(object):
                 self.current_state[agent_index] = curr_obs
                 self.target_action[agent_index, target_action] = 1
 
-        return dict(episode=self.past_trajectories,
+        return dict(episodes=self.past_trajectories,
                     curr_state=self.current_state,
                     target_action=self.target_action,
                     dones=self.dones)
 
     def reset(self):
-        self.past_trajectories = np.zeros(self.past_trajectories)
-        self.current_state = np.zeros(self.current_state)
-        self.target_action = np.zeros(self.target_action)
-        self.dones = np.zeros(self.dones)
-        self.action_count = np.zeros(self.action_count)
+        self.past_trajectories = np.zeros(self.past_trajectories.shape)
+        self.current_state = np.zeros(self.current_state.shape)
+        self.target_action = np.zeros(self.target_action.shape)
+        self.dones = np.zeros(self.dones.shape)
+        self.action_count = np.zeros(self.action_count.shape)
 
     def get_most_act(self):
         action_count = copy.deepcopy(self.action_count)

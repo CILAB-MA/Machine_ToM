@@ -17,12 +17,12 @@ def train(tom_net, optimizer, train_loader, eval_loader, experiment_folder, dict
         results = tom_net.train(train_loader, optimizer)
         acc, loss = results
 
-        ev_results = evaluate(tom_net, eval_loader, dicts)
+        ev_results = evaluate(tom_net, eval_loader, experiment_folder, dicts)
 
         if epoch % dicts['save_freq'] == 0:
             save_path = utils.save_model(tom_net, dicts, experiment_folder, epoch)
 
-    print(ev_results)
+    print(acc, loss, ev_results)
     # TODO: ADD THE VISUALIZE PART
     # TODO: ADD THE TENSORBOARD
 
@@ -30,12 +30,11 @@ def evaluate(tom_net, eval_loader, experiment_folder, dicts):
 
     with tr.no_grad():
          ev_results = tom_net.evaluate(eval_loader)
-
     # TODO : ADD THE VISUALIZE PART
     # TODO : ADD THE TENSORBOARD
 
 def run_experiment(num_epoch, main_experiment, sub_experiment, batch_size, lr,
-                   num_eval, experiment_folder, alpha):
+                   experiment_folder, alpha, save_freq):
 
     exp_kwargs, env_kwargs, model_kwargs, agent_kwargs = get_configs(sub_experiment)
     population = utils.make_pool('random', exp_kwargs['move_penalty'], alpha)
@@ -45,11 +44,11 @@ def run_experiment(num_epoch, main_experiment, sub_experiment, batch_size, lr,
     if model_kwargs['device'] == 'cuda':
         tom_net = tom_net.cuda()
     dicts = dict(main=main_experiment, sub=sub_experiment, alpha=alpha, batch_size=batch_size,
-                 lr=lr, num_epoch=num_epoch)
+                 lr=lr, num_epoch=num_epoch, save_freq=save_freq)
 
     # Make the Dataset
-    train_storage = Storage(env)
-    eval_storage = Storage(env)
+    train_storage = Storage(env, population, exp_kwargs['num_past'], exp_kwargs['num_step'])
+    eval_storage = Storage(env, population, exp_kwargs['num_past'], exp_kwargs['num_step'])
     train_data = train_storage.extract()
     train_data['exp'] = 'exp1'
     eval_data = eval_storage.extract()
@@ -61,7 +60,7 @@ def run_experiment(num_epoch, main_experiment, sub_experiment, batch_size, lr,
 
     # Train
     optimizer = optim.Adam(tom_net.parameters(), lr=lr)
-    train(tom_net, optimizer, population, train_loader, eval_loader, experiment_folder, dicts)
+    train(tom_net, optimizer, train_loader, eval_loader, experiment_folder, dicts)
 
     # Test
     eval_storage.reset()
@@ -69,7 +68,7 @@ def run_experiment(num_epoch, main_experiment, sub_experiment, batch_size, lr,
     test_data['exp'] = 'exp1'
     test_dataset = dataset.ToMDataset(**test_data)
     test_loader = DataLoader(test_dataset, batch_size=len(test_dataset), shuffle=False)
-    evaluate(tom_net, test_loader, dicts)
+    evaluate(tom_net, test_loader, experiment_folder, dicts)
 
 
 

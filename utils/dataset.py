@@ -3,7 +3,7 @@ from torch.utils.data import Dataset
 
 class ToMDataset(Dataset):
 
-    def __init__(self, episodes, curr_state, target_action, target_prefer,
+    def __init__(self, episodes, curr_state, target_action, target_prefer=None,
                  target_sr=None, target_v=None, dones=None, exp='exp1'):
         self.episodes = episodes
         self.curr_state = curr_state

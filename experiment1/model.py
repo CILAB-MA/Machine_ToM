@@ -82,7 +82,7 @@ class PredNet(nn.Module):
         tot_acc = 0
         tot_loss = 0
         for i, batch in enumerate(data_loader):
-            past_traj, curr_state, target, ind = batch
+            past_traj, curr_state, target = batch
             past_traj = tr.tensor(past_traj, dtype=tr.float, device=self.device)
             curr_state = tr.tensor(curr_state, dtype=tr.float, device=self.device)
             target = tr.tensor(target, dtype=tr.float, device=self.device)
@@ -104,7 +104,7 @@ class PredNet(nn.Module):
         for i, batch in enumerate(data_loader):
             with tr.no_grad():
 
-                past_traj, curr_state, target, ind = batch
+                past_traj, curr_state, target = batch
                 past_traj = tr.tensor(past_traj, dtype=tr.float, device=self.device)
                 curr_state = tr.tensor(curr_state, dtype=tr.float, device=self.device)
                 target = tr.tensor(target, dtype=tr.float, device=self.device)
