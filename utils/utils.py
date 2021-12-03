@@ -4,21 +4,18 @@ import datetime as dt
 from dateutil.tz import gettz
 import agent
 
-def save_model(model, dicts):
-    global year, month, day, hour, minutes, sec
+def save_model(model, dicts, experiment_folder, epoch):
+    model_path = '{}/checkpoints'.format(experiment_folder)
 
-    foldername = '{}_{}_{}_{}_{}_{}'.format(year, month, day, hour, minutes, sec)
-    if not os.path.exists('./results/{}/checkpoints'.format(foldername)):
-        os.makedirs('./results/{}/checkpoints'.format(foldername))
+    if not os.path.exists(model_path):
+        os.makedirs(model_path)
     dkeys = dicts.keys()
     filename_str = 'model_'
     for d in dkeys:
         vals = dicts[d]
         filename_str += '{}_{}_'.format(d, vals)
-
-    tr.save(model, './results/{}/checkpoints/{}'.format(foldername, filename_str))
-
-    return './results/{}/checkpoints'.format(foldername)
+    filename_str += 'epoch_{}'.format(epoch)
+    tr.save(model, '{}/{}'.format(model_path, filename_str))
 
 def make_folder():
     now = dt.datetime.now(gettz('Asia/Seoul'))
@@ -35,11 +32,11 @@ def make_pool(agent_type, move_penalty, alpha, num_agent=1000):
     population = []
     if (type(alpha) == int) or (type(alpha) == float):
         for _ in range(num_agent):
-            population.append(agent_template(alpha=alpha, num_action=5))
+            population.append(agent_template(alpha=alpha, num_action=5, move_penalty=move_penalty))
     elif type(alpha) == list:
         for i, group in enumerate(num_agent):
             for _ in range(group):
-                population.append(agent_template(alpha=alpha[i], num_action=5))
+                population.append(agent_template(alpha=alpha[i], num_action=5, move_penalty=move_penalty))
     else:
         assert ('Your alpha type is not proper type. We expect list, int or float. '
                 'But we get the {}. Also check num_agent'.format(type(alpha)))
