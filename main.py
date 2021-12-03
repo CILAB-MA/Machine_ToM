@@ -17,6 +17,7 @@ def parse_args():
     args = parser.parse_args()
     return args
 
+
 def main(args):
     experiment_folder = utils.make_folder()
     EXPERIMENTS[args.main_exp].run_experiment(num_epoch=args.num_epoch, sub_experiment=args.sub_exp,
