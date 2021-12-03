@@ -12,7 +12,7 @@ class Storage(object):
         self.target_action = np.zeros([len(population), 1])
         self.target_preference = np.zeros([len(population), 4])
         self.target_sr = np.zeros([len(population), env.height, env.width, 3])
-        self.target_policy = np.zeros([len(population), env.height, env.width, 1])
+        self.target_value = np.zeros([len(population), env.height, env.width, 1])
         self.dones = np.zeros([len(population), num_past, num_step, 1])
         self.population = population
         self.num_past = num_past
@@ -74,7 +74,7 @@ class Storage(object):
             sr[:, :, 0] /= np.sum(sr[:, :, 0])
             sr[:, :, 1] /= np.sum(sr[:, :, 1])
             sr[:, :, 2] /= np.sum(sr[:, :, 2])
-            self.target_policy[agent_index] = agent.V.reshape((11, 11, 1))
+            self.target_value[agent_index] = agent.V.reshape((11, 11, 1))
             self.current_state[agent_index] = curr_obs
             self.target_action[agent_index] = target_action
             if consumed != None:
@@ -84,8 +84,23 @@ class Storage(object):
         #    self.past_trajectories.shape, self.current_state.shape, self.target_action.shape, self.target_preference.shape,
         #    self.target_sr.shape, self.target_policy.shape, self.dones.shape
         #))
-        return self.past_trajectories, self.current_state, self.target_action, self.target_preference, self.target_sr, \
-               self.target_policy, self.dones
+        return dict(episodes=self.past_trajectories, curr_state=self.current_state,
+                    target_action=self.target_action, target_prefer=self.target_preference,
+                    target_sr=self.target_sr, target_v=self.target_value,
+                    dones=self.dones)
+
+    def reset(self):
+        self.past_trajectories = np.zeros(self.past_trajectories.shape)
+        self.current_state = np.zeros(self.current_state.shape)
+        self.target_action = np.zeros(self.target_action.shape)
+
+        self.target_prefer = np.zeros(self.target_preference.shape)
+        self.target_sr = np.zeros(self.target_sr.shape)
+        self.target_v = np.zeros(self.target_value.shape)
+
+        self.dones = np.zeros(self.dones.shape)
+        self.action_count = np.zeros(self.action_count.shape)
+
 
     def get_most_act(self):
         action_count = copy.deepcopy(self.action_count)

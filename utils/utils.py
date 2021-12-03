@@ -30,6 +30,7 @@ def make_folder():
 def make_pool(agent_type, move_penalty, alpha, num_agent=1000):
     agent_template = agent.agent_type[agent_type]
     population = []
+
     if (type(alpha) == int) or (type(alpha) == float):
         for _ in range(num_agent):
             population.append(agent_template(alpha=alpha, num_action=5, move_penalty=move_penalty))
