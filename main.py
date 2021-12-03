@@ -1,9 +1,9 @@
-
-import experiment1, experiment2
+import experiment1.experiment as experiment1
+import experiment2.experiment as experiment2
 import argparse
 from utils import utils
 
-EXPERIMENTS = [experiment1.experiment, experiment2.experiment] # experiment 3 will be update
+EXPERIMENTS = [experiment1, experiment2] # experiment 3 will be update
 
 
 def parse_args():
@@ -22,6 +22,7 @@ def main(args):
     EXPERIMENTS[args.main_exp].run_experiment(num_epoch=args.num_epoch, sub_experiment=args.sub_exp,
                                               batch_size=args.batch_size, lr=args.lr, num_eval=args.num_eval,
                                               experiment_folder=experiment_folder)
+
 
 if __name__ == '__main__':
     args = parse_args()

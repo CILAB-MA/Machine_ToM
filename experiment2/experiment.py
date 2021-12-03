@@ -1,21 +1,16 @@
-import agent
-import numpy as np
+import agent as agent
 from environment.env import GridWorldEnv
 import torch.optim as optim
-from model import model
 
-import torch as tr
 from torch.utils.tensorboard import SummaryWriter
-
 from utils.dataset import ToMDataset
-from experiment2.store_trajectories import Storage
 from utils.visualize import *
 from utils.utils import *
-import config
+
+from experiment2.store_trajectories import Storage
+from experiment2 import config, model
 
 from torch.utils.data import DataLoader
-
-MODELS = [model2_1.PredNet, model2_2.PredNet, model2_3.PredNet]
 
 
 def make_pool(num_agent, alpha, move_penalty):
@@ -31,6 +26,7 @@ def make_pool(num_agent, alpha, move_penalty):
         assert ('Your alpha type is not proper type. We expect list, int or float. '
                 'But we get the {}. Also check num_agent'.format(type(alpha)))
     return population
+
 
 def train(tom_nets, optims, env, population, is_active, method_type,
               num_past, num_step, num_epoch, batch_size, dicts):
@@ -141,10 +137,11 @@ def evaluate(tom_net, env, population, save_path,
     # visulaize_embedding(e_chars, most_action_index, most_action_count, save_path,
     # filename='e_char_{}.jpg'.format(past))
 
-def make_pool(sub_experiment):
+# def make_pool(sub_experiment):
+#
+#     agent_config = dict(name='reward_seeking', species=[0.01], num=1000)
+#     agent = agent.agent_type[agent_config['name']]
 
-    agent_config = dict(name='reward_seeking', species=[0.01], num=1000)
-    agent = agent.agent_type[agent_config['name']]
 
 
 def run_experiment(num_epoch, sub_experiment, batch_size, lr, num_eval, experiment_folder):
@@ -163,5 +160,3 @@ def run_experiment(num_epoch, sub_experiment, batch_size, lr, num_eval, experime
     optimizer = optim.Adam(tom_net)
     train(optimizer, tom_net, storage, num_epoch, batch_size, lr, num_eval, experiment_folder)
     evaluate(tom_net, storage, num_epoch, batch_size, lr, num_eval, experiment_folder)
-
-

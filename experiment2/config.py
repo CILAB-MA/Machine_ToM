@@ -1,4 +1,3 @@
-
 def get_configs(num_exp, max_step=31):
 
     # get sub exp configs
@@ -23,5 +22,6 @@ def get_configs(num_exp, max_step=31):
 
     exp_kwargs = dict(num_past=num_past, num_step=num_step, move_penalty=move_penalty)
 
-    dicts = dict(exp=args.exp_num, method=args.method_type, lr=args.lr)
-    return exp_kwargs, env_kwargs, model_kwargs
+    # dicts = dict(exp=args.exp_num, method=args.method_type, lr=args.lr)
+
+    return exp_kwargs, env_kwargs, model_kwargs #,dict
