@@ -1,35 +1,21 @@
-import agent as agent
 from environment.env import GridWorldEnv
+from experiment2 import model
+from experiment2.store_trajectories import Storage
+from experiment2.config import get_configs
+
 import torch.optim as optim
+from utils import utils
+from utils import dataset
 
 from torch.utils.tensorboard import SummaryWriter
 from utils.dataset import ToMDataset
 from utils.visualize import *
 from utils.utils import *
-
-from experiment2.store_trajectories import Storage
-from experiment2 import config, model
-
 from torch.utils.data import DataLoader
 
 
-def make_pool(num_agent, alpha, move_penalty):
-    population = []
-    if (type(alpha) == int) or (type(alpha) == float):
-        for _ in range(num_agent):
-            population.append(agent(alpha=alpha, num_action=5, move_penalty=move_penalty))
-    elif type(alpha) == list:
-        for i, group in enumerate(num_agent):
-            for _ in range(group):
-                population.append(agent(alpha=alpha[i], num_action=5, move_penalty=move_penalty))
-    else:
-        assert ('Your alpha type is not proper type. We expect list, int or float. '
-                'But we get the {}. Also check num_agent'.format(type(alpha)))
-    return population
 
-
-def train(tom_nets, optims, env, population, is_active, method_type,
-              num_past, num_step, num_epoch, batch_size, dicts):
+def train(tom_nets, optims, env, population, num_past, num_step, num_epoch, batch_size, dicts):
 
     storage = Storage(env, population, num_past, num_step=num_step)
     ev_storage = Storage(env, population, num_past, num_step=num_step)
@@ -103,7 +89,6 @@ def train(tom_nets, optims, env, population, is_active, method_type,
 
         # Visualize the Training
 
-
     return tom_nets, save_path
 
 def evaluate(tom_net, env, population, save_path,
@@ -134,29 +119,41 @@ def evaluate(tom_net, env, population, save_path,
 
     # TODO : visualize other measures
 
-    # visulaize_embedding(e_chars, most_action_index, most_action_count, save_path,
-    # filename='e_char_{}.jpg'.format(past))
 
-# def make_pool(sub_experiment):
-#
-#     agent_config = dict(name='reward_seeking', species=[0.01], num=1000)
-#     agent = agent.agent_type[agent_config['name']]
+def run_experiment(num_epoch, main_experiment, sub_experiment, batch_size, lr,
+                   num_eval, experiment_folder, alpha):
 
+    exp_kwargs, env_kwargs, model_kwargs, agent_kwargs = get_configs(sub_experiment)
 
-
-def run_experiment(num_epoch, sub_experiment, batch_size, lr, num_eval, experiment_folder):
-
-    exp_kwargs, env_kwargs, model_kwargs = config.get_configs(sub_experiment)
-
-    population = make_pool(sub_experiment, exp_kwargs['move_penalty'])
-
+    population = utils.make_pool(sub_experiment, exp_kwargs['move_penalty'], alpha)
     env = GridWorldEnv(env_kwargs)
-
     tom_net = model.PredNet(**model_kwargs)
+
     if model_kwargs['device'] == 'cuda':
         tom_net = tom_net.cuda()
+    dicts = dict(main=main_experiment, sub=sub_experiment, alpha=alpha, batch_size=batch_size,
+                 lr=lr, num_epoch=num_epoch)
 
-    storage = Storage()
-    optimizer = optim.Adam(tom_net)
-    train(optimizer, tom_net, storage, num_epoch, batch_size, lr, num_eval, experiment_folder)
-    evaluate(tom_net, storage, num_epoch, batch_size, lr, num_eval, experiment_folder)
+    # Make the Dataset
+    train_storage = Storage(env)
+    eval_storage = Storage(env)
+    train_data = train_storage.extract()
+    train_data['exp'] = 'exp2'
+    eval_data = eval_storage.extract()
+    eval_data['exp'] = 'exp2'
+    train_dataset = dataset.ToMDataset(**train_data)
+    eval_dataset = dataset.ToMDataset(**eval_data)
+    train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
+    eval_loader = DataLoader(eval_dataset, batch_size=len(eval_dataset), shuffle=False)
+
+    # Train
+    optimizer = optim.Adam(tom_net.parameters(), lr=lr)
+    train(tom_net, optimizer, population, train_loader, eval_loader, dicts)
+
+    # Test
+    eval_storage.reset()
+    test_data = eval_storage.extract()
+    test_data['exp'] = 'exp1'
+    test_dataset = dataset.ToMDataset(**test_data)
+    test_loader = DataLoader(test_dataset, batch_size=len(test_dataset), shuffle=False)
+    evaluate(tom_net, test_loader, dicts)
