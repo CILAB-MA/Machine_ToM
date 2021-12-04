@@ -37,7 +37,7 @@ class Storage(object):
                     action = agent.act(obs)
                     self.action_count[agent_index, action] += 1
                     spatial_concat_action = np.zeros((self.env.height, self.env.width, 5))
-                    spatial_concat_action[:, :  action] = 1
+                    spatial_concat_action[:, :,  action] = 1
                     obs_concat = np.concatenate([obs, spatial_concat_action], axis=-1)
                     self.past_trajectories[agent_index, past_epi, step] = obs_concat
                     self.dones[agent_index, past_epi, step] = 1

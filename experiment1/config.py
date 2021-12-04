@@ -12,3 +12,5 @@ def get_configs(num_exp, max_step=1):
     agent_kwargs = dict(agent_type='random')
 
     return exp_kwargs, env_kwargs, model_kwargs, agent_kwargs
+
+#def get_inference_configs(num_exp):

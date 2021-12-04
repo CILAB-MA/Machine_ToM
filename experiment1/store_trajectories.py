@@ -14,18 +14,21 @@ class Storage(object):
         self.num_past = num_past
         self.action_count = np.zeros([len(population), 5])
 
-    def extract(self, custom_env=None):
+    def extract(self, custom_env=-100):
         for agent_index, agent in enumerate(self.population):
 
             for past_epi in range(self.num_past):
-                obs = self.env.reset()
+                if np.sum(custom_env) > 0:
+                    obs = self.env.reset(custom=custom_env[agent_index])
+                else:
+                    obs = self.env.reset()
 
                 # gathering past trajectories
                 for step in range(self.env.epi_max_step):
                     action = agent.act(obs)
                     self.action_count[agent_index, action] += 1
                     spatial_concat_action = np.zeros((self.env.height, self.env.width, 5))
-                    spatial_concat_action[:, :  action] = 1
+                    spatial_concat_action[:, :,  action] = 1
 
                     obs_concat = np.concatenate([obs, spatial_concat_action], axis=-1)
                     self.past_trajectories[agent_index, past_epi, step] = obs_concat

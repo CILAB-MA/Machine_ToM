@@ -98,7 +98,7 @@ class PredNet(nn.Module):
             tot_loss += loss.item()
         return dict(action_acc= tot_acc / 1000, action_loss=tot_loss / (i + 1))
 
-    def evaluate(self, data_loader):
+    def evaluate(self, data_loader, is_visualize=False):
         tot_acc = 0
         tot_loss = 0
         for i, batch in enumerate(data_loader):
@@ -116,4 +116,13 @@ class PredNet(nn.Module):
             tot_acc += tr.sum(pred_onehot==targ_onehot).item()
             tot_loss += loss.item()
 
-        return dict(action_acc=tot_acc / 1000, action_loss=tot_loss / (i + 1), e_char=e_char.cpu().numpy())
+        dicts = dict()
+        if is_visualize:
+            dicts['past_traj'] = past_traj[:16].cpu().numpy()
+            dicts['curr_state'] = curr_state[:16].cpu().numpy()
+            dicts['pred_actions'] = pred[:16].cpu().numpy()
+            dicts['e_char'] = e_char.cpu().numpy()
+        dicts['action_acc'] = tot_acc / 1000
+        dicts['action_loss'] = tot_loss / (i + 1)
+
+        return dicts
