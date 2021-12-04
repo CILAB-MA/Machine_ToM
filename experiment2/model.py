@@ -198,7 +198,7 @@ class PredNet(nn.Module):
         c_loss = 0
         s_loss = 0
         action_acc = 0
-        comsumption_acc = 0
+        consumption_acc = 0
 
         criterion_nll = nn.NLLLoss()
         criterion_bce = nn.BCELoss()
@@ -233,9 +233,12 @@ class PredNet(nn.Module):
             tot_loss += loss.item()
 
             action_acc += tr.sum(pred_action_ind == target_action).item()
-            comsumption_acc += tr.sum(pred_consumption_ind == targ_consumption_ind).item()
+            consumption_acc += tr.sum(pred_consumption_ind == targ_consumption_ind).item()
 
-        return action_acc / 1000, comsumption_acc / 1000, a_loss / (i + 1), c_loss / (i + 1), s_loss / (i + 1), tot_loss / (i + 1)
+        dicts = dict(action_acc=action_acc / 1000, consumption_acc=consumption_acc / 1000,
+                     action_loss=a_loss / (i + 1), consumption_loss=c_loss / (i + 1),
+                     sr_loss=sr_loss / (i + 1), total_loss=tot_loss / (i + 1))
+        return dicts
 
     def evaluate(self, data_loader):
 
@@ -244,7 +247,7 @@ class PredNet(nn.Module):
         c_loss = 0
         s_loss = 0
         action_acc = 0
-        comsumption_acc = 0
+        consumption_acc = 0
 
         criterion_nll = nn.NLLLoss()
         criterion_bce = nn.BCELoss()  # reduction sum or mean?
@@ -281,11 +284,13 @@ class PredNet(nn.Module):
             tot_loss += loss.item()
 
             action_acc += tr.sum(pred_action_ind == target_action).item()
-            comsumption_acc += tr.sum(pred_consumption_ind == targ_consumption_ind).item()
+            consumption_acc += tr.sum(pred_consumption_ind == targ_consumption_ind).item()
 
         act_preds = pred_action[:16].detach().cpu().numpy()
         sr_preds = pred_sr[:16].reshape(-1, 3, 11, 11).detach().cpu().numpy()
         con_preds = pred_consumption[:16].detach().cpu().numpy()
 
-        return action_acc / 1000, comsumption_acc / 1000, a_loss / (i + 1), c_loss / (i + 1), s_loss / (
-                i + 1), tot_loss / (i + 1), sr_preds, con_preds, act_preds
+        dicts = dict(action_acc=action_acc / 1000, consumption_acc=consumption_acc / 1000,
+                     action_loss=a_loss / (i + 1), consumption_loss=c_loss / (i + 1),
+                     sr_loss=sr_loss / (i + 1), total_loss=tot_loss / (i + 1))
+        return dicts

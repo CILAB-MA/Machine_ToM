@@ -96,7 +96,7 @@ class PredNet(nn.Module):
             targ_onehot = tr.argmax(target, dim=-1)
             tot_acc += tr.sum(pred_onehot==targ_onehot).item()
             tot_loss += loss.item()
-        return tot_acc / 1000, tot_loss / (i + 1)
+        return dict(action_acc= tot_acc / 1000, action_loss=tot_loss / (i + 1))
 
     def evaluate(self, data_loader):
         tot_acc = 0
@@ -116,4 +116,4 @@ class PredNet(nn.Module):
             tot_acc += tr.sum(pred_onehot==targ_onehot).item()
             tot_loss += loss.item()
 
-        return tot_acc / 1000, tot_loss / (i + 1), e_char
+        return dict(action_acc=tot_acc / 1000, action_loss=tot_loss / (i + 1), e_char=e_char.cpu().numpy())

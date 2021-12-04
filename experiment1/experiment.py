@@ -6,32 +6,36 @@ from experiment1.config import get_configs
 from utils.visualize import *
 from utils import utils
 from utils import dataset
+from utils import writer
 
 from torch.utils.data import DataLoader
 import torch as tr
 import torch.optim as optim
 
-def train(tom_net, optimizer, train_loader, eval_loader, experiment_folder, dicts):
+def train(tom_net, optimizer, train_loader, eval_loader, experiment_folder, writer, visualizer, dicts):
 
     for epoch in range(dicts['num_epoch']):
         results = tom_net.train(train_loader, optimizer)
-        acc, loss = results
 
         ev_results = evaluate(tom_net, eval_loader, experiment_folder, dicts)
 
         if epoch % dicts['save_freq'] == 0:
-            save_path = utils.save_model(tom_net, dicts, experiment_folder, epoch)
+            utils.save_model(tom_net, dicts, experiment_folder, epoch)
+        writer.write(results, epoch, is_train=True)
+        ev_results.pop('e_char')
+        writer.write(ev_results, epoch, is_train=False)
+        print('Train| Epoch {} Loss |{:.4f}|Acc |{:.4f}'.format(epoch, results['action_loss'], results['action_acc']))
+        print('Eval| Epoch {} Loss |{:.4f}|Acc |{:.4f}'.format(epoch, ev_results['action_loss'], ev_results['action_acc']))
 
-    print(acc, loss, ev_results)
-    # TODO: ADD THE VISUALIZE PART
-    # TODO: ADD THE TENSORBOARD
+        # TODO: ADD THE VISUALIZE PART
+
 
 def evaluate(tom_net, eval_loader, experiment_folder, dicts):
 
     with tr.no_grad():
-         ev_results = tom_net.evaluate(eval_loader)
-    # TODO : ADD THE VISUALIZE PART
-    # TODO : ADD THE TENSORBOARD
+        ev_results = tom_net.evaluate(eval_loader)
+
+    return ev_results
 
 def run_experiment(num_epoch, main_experiment, sub_experiment, batch_size, lr,
                    experiment_folder, alpha, save_freq):
@@ -58,9 +62,14 @@ def run_experiment(num_epoch, main_experiment, sub_experiment, batch_size, lr,
     train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
     eval_loader = DataLoader(eval_dataset, batch_size=len(eval_dataset), shuffle=False)
 
+    summary_writer = writer.Writer(os.path.join(experiment_folder, 'logs'))
+    visualizer = Visualizer(os.path.join(experiment_folder, 'images'), grid_per_pixel=8,
+                            max_epoch=num_epoch, height=env.height, width=env.width)
+
     # Train
     optimizer = optim.Adam(tom_net.parameters(), lr=lr)
-    train(tom_net, optimizer, train_loader, eval_loader, experiment_folder, dicts)
+    train(tom_net, optimizer, train_loader, eval_loader, experiment_folder,
+          summary_writer, visualizer, dicts)
 
     # Test
     eval_storage.reset()
@@ -68,7 +77,8 @@ def run_experiment(num_epoch, main_experiment, sub_experiment, batch_size, lr,
     test_data['exp'] = 'exp1'
     test_dataset = dataset.ToMDataset(**test_data)
     test_loader = DataLoader(test_dataset, batch_size=len(test_dataset), shuffle=False)
-    evaluate(tom_net, test_loader, experiment_folder, dicts)
+    ev_results = evaluate(tom_net, test_loader, experiment_folder, dicts)
+    print(ev_results)
 
 
 

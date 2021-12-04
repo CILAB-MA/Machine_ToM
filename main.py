@@ -21,7 +21,7 @@ def parse_args():
 
 def main(args):
     experiment_folder = utils.make_folder()
-    EXPERIMENTS[args.main_exp].run_experiment(num_epoch=args.num_epoch, main_experiment=args.main_exp,
+    EXPERIMENTS[args.main_exp - 1].run_experiment(num_epoch=args.num_epoch, main_experiment=args.main_exp,
                                               sub_experiment=args.sub_exp, batch_size=args.batch_size,
                                               lr=args.lr, experiment_folder=experiment_folder,
                                               alpha=args.alpha, save_freq=args.save_freq)
