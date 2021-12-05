@@ -238,57 +238,31 @@ class PredNet(nn.Module):
                      sr_loss=sr_loss / (i + 1), total_loss=tot_loss / (i + 1))
         return dicts
 
-    def evaluate(self, data_loader):
-
+    def evaluate(self, data_loader, is_visualize=False):
+        tot_acc = 0
         tot_loss = 0
-        a_loss = 0
-        c_loss = 0
-        s_loss = 0
-        action_acc = 0
-        consumption_acc = 0
-
-        criterion_nll = nn.NLLLoss()
-        criterion_bce = nn.BCELoss()  # reduction sum or mean?
-        criterion_kl = nn.KLDivLoss(reduction='batchmean')
-
         for i, batch in enumerate(data_loader):
-            past_traj, curr_state, target_action, target_consume, target_sr, target_v, dones = batch
-            past_traj = past_traj.float().cuda()
-            curr_state = curr_state.float().cuda()
-            target_action = target_action.long().cuda().squeeze(-1)
-            target_consume_onehot = target_consume.float().cuda()
-            target_sr = target_sr.float().cuda()
-            target_v = target_v.float().cuda()
-            # y_onehot = tr.zeros(target_consume.shape[0], 4).cuda()
-            # target_consume_onehot = y_onehot.scatter_(1, target_consume, 1)
+            with tr.no_grad():
 
-            pred_action, pred_consumption, pred_sr = self.forward(past_traj, curr_state)
-            action_loss = criterion_nll(pred_action, target_action)
-            consumption_loss = criterion_bce(pred_consumption, target_consume_onehot)
-            # consumption_loss = criterion_nll(pred_consumption, target_consume)
-            sr_loss = criterion_kl(pred_sr.log().transpose(1, 2), target_sr.flatten(1, 2))
-
-
-            loss = action_loss + consumption_loss + sr_loss
-
-
-            pred_action_ind = tr.argmax(pred_action, dim=-1)
-            pred_consumption_ind = tr.argmax(pred_consumption, dim=-1)
-            targ_consumption_ind = tr.argmax(target_consume_onehot, dim=-1)
-
-            a_loss += action_loss.item()
-            c_loss += consumption_loss.item()
-            s_loss += sr_loss.item()
+                past_traj, curr_state, target = batch
+                past_traj = tr.tensor(past_traj, dtype=tr.float, device=self.device)
+                curr_state = tr.tensor(curr_state, dtype=tr.float, device=self.device)
+                target = tr.tensor(target, dtype=tr.float, device=self.device)
+                criterion = nn.KLDivLoss()
+            pred, e_char = self.forward(past_traj, curr_state)
+            loss = criterion(pred.log(), target)
+            pred_onehot = tr.argmax(pred, dim=-1)
+            targ_onehot = tr.argmax(target, dim=-1)
+            tot_acc += tr.sum(pred_onehot==targ_onehot).item()
             tot_loss += loss.item()
 
-            action_acc += tr.sum(pred_action_ind == target_action).item()
-            consumption_acc += tr.sum(pred_consumption_ind == targ_consumption_ind).item()
+        dicts = dict()
+        if is_visualize:
+            dicts['past_traj'] = past_traj[:16].cpu().numpy()
+            dicts['curr_state'] = curr_state[:16].cpu().numpy()
+            dicts['pred_actions'] = pred[:16].cpu().numpy()
+            dicts['e_char'] = e_char.cpu().numpy()
+        dicts['action_acc'] = tot_acc / 1000
+        dicts['action_loss'] = tot_loss / (i + 1)
 
-        act_preds = pred_action[:16].detach().cpu().numpy()
-        sr_preds = pred_sr[:16].reshape(-1, 3, 11, 11).detach().cpu().numpy()
-        con_preds = pred_consumption[:16].detach().cpu().numpy()
-
-        dicts = dict(action_acc=action_acc / 1000, consumption_acc=consumption_acc / 1000,
-                     action_loss=a_loss / (i + 1), consumption_loss=c_loss / (i + 1),
-                     sr_loss=sr_loss / (i + 1), total_loss=tot_loss / (i + 1))
         return dicts
