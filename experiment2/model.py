@@ -101,9 +101,7 @@ class CharNet(nn.Module):
             e_char_sum = tr.stack(e_char, dim=0)
             final_e_char = e_char_sum
 
-            if self.num_exp == 1:
-                pass
-            else:
+            if self.num_exp == 2 or self.num_exp == 3:
                 ## stack_num_past
                 past_e_char.append(e_char_sum)
 

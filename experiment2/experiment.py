@@ -18,7 +18,6 @@ def train(tom_net, optimizer, train_loader, eval_loader, experiment_folder, writ
 
     for epoch in range(dicts['num_epoch']):
         results = tom_net.train(train_loader, optimizer)
-        action_acc, comsumption_acc, action_loss, comsumption_loss, sr_loss, total_loss = results
 
         ev_results = evaluate(tom_net, eval_loader, experiment_folder, dicts)
 
