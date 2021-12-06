@@ -39,11 +39,24 @@ def train(tom_net, optimizer, train_loader, eval_loader, experiment_folder, writ
         # TODO: ADD THE VISUALIZE PART
 
 
-def evaluate(tom_net, eval_loader, experiment_folder, dicts):
-
+def evaluate(tom_net, eval_loader, visualizer=None, is_visualize=False,
+             most_act=None, count_act=None):
+    '''
+    we provide the base result of figure 2,
+    but if you want to show the other results,
+    run the inference.py after you have the models.
+    '''
     with tr.no_grad():
-         ev_results = tom_net.evaluate(eval_loader)
+        ev_results = tom_net.evaluate(eval_loader, is_visualize=is_visualize)
 
+    if is_visualize:
+        for n in range(16):
+            agent_xys = np.where(ev_results['past_traj'][n, 0, :, :, :, 5] == 1)
+            visualizer.get_past_traj(ev_results['past_traj'][n][0][0], agent_xys, 0, sample_num=n)
+            visualizer.get_curr_state(ev_results['curr_state'][n], 0, sample_num=n)
+            visualizer.get_action(ev_results['pred_actions'][n], 0, sample_num=n)
+
+        visualizer.get_char(ev_results['e_char'], most_act, count_act, 0)
     return ev_results
 
 
@@ -51,7 +64,6 @@ def run_experiment(num_epoch, main_experiment, sub_experiment, batch_size, lr,
                    experiment_folder, alpha, save_freq):
 
     exp_kwargs, env_kwargs, model_kwargs, agent_type = get_configs(sub_experiment)
-
     population = utils.make_pool(agent_type, exp_kwargs['move_penalty'], alpha)
     env = GridWorldEnv(env_kwargs)
     tom_net = model.PredNet(**model_kwargs)
@@ -71,7 +83,7 @@ def run_experiment(num_epoch, main_experiment, sub_experiment, batch_size, lr,
     train_dataset = dataset.ToMDataset(**train_data)
     eval_dataset = dataset.ToMDataset(**eval_data)
     train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
-    eval_loader = DataLoader(eval_dataset, batch_size=len(eval_dataset), shuffle=False)
+    eval_loader = DataLoader(eval_dataset, batch_size=batch_size, shuffle=False) #len(eval_dataset)
 
     summary_writer = writer.Writer(os.path.join(experiment_folder, 'logs'))
     visualizer = Visualizer(os.path.join(experiment_folder, 'images'), grid_per_pixel=8,
@@ -87,5 +99,6 @@ def run_experiment(num_epoch, main_experiment, sub_experiment, batch_size, lr,
     test_data['exp'] = 'exp2'
     test_dataset = dataset.ToMDataset(**test_data)
     test_loader = DataLoader(test_dataset, batch_size=len(test_dataset), shuffle=False)
-    ev_results = evaluate(tom_net, test_loader, experiment_folder, dicts)
-    print(ev_results)
+    most_act, count_act = eval_storage.get_most_act()
+    # ev_results = evaluate(tom_net, test_loader, visualizer, is_visualize=False,
+    #                       most_act=most_act, count_act=count_act)
