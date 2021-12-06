@@ -19,7 +19,7 @@ def train(tom_net, optimizer, train_loader, eval_loader, experiment_folder, writ
     for epoch in range(dicts['num_epoch']):
         results = tom_net.train(train_loader, optimizer)
 
-        ev_results = evaluate(tom_net, eval_loader, experiment_folder, dicts)
+        ev_results = evaluate(tom_net, eval_loader)
 
         if epoch % dicts['save_freq'] == 0:
             utils.save_model(tom_net, dicts, experiment_folder, epoch)
@@ -100,5 +100,5 @@ def run_experiment(num_epoch, main_experiment, sub_experiment, batch_size, lr,
     test_dataset = dataset.ToMDataset(**test_data)
     test_loader = DataLoader(test_dataset, batch_size=len(test_dataset), shuffle=False)
     most_act, count_act = eval_storage.get_most_act()
-    # ev_results = evaluate(tom_net, test_loader, visualizer, is_visualize=False,
-    #                       most_act=most_act, count_act=count_act)
+    ev_results = evaluate(tom_net, test_loader, visualizer, is_visualize=True,
+                          most_act=most_act, count_act=count_act)
