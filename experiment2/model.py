@@ -291,7 +291,7 @@ class PredNet(nn.Module):
             dicts['curr_state'] = curr_state[:16].cpu().numpy()
             dicts['pred_actions'] = pred_action[:16].cpu().numpy()
             dicts['pred_consumption'] = pred_consumption[:16].cpu().numpy()
-            dicts['pred_sr'] = pred_sr[:16].cpu().numpy()
+            dicts['pred_sr'] = pred_sr[:16].reshape(-1, 3, 11, 11).cpu().numpy()
             dicts['e_char'] = e_char.cpu().numpy()
 
 

@@ -55,6 +55,8 @@ def evaluate(tom_net, eval_loader, visualizer=None, is_visualize=False,
             visualizer.get_past_traj(ev_results['past_traj'][n][0][0], agent_xys, 0, sample_num=n)
             visualizer.get_curr_state(ev_results['curr_state'][n], 0, sample_num=n)
             visualizer.get_action(ev_results['pred_actions'][n], 0, sample_num=n)
+            visualizer.get_prefer(ev_results['pred_consumption'][n], 0, sample_num=n)
+            visualizer.get_sr(ev_results['curr_state'][n], ev_results['pred_sr'][n], 0, sample_num=n)
 
         visualizer.get_char(ev_results['e_char'], most_act, count_act, 0)
     return ev_results
