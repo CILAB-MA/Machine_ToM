@@ -12,7 +12,7 @@ from utils.visualize import *
 from utils.utils import *
 from torch.utils.data import DataLoader
 import torch as tr
-
+import numpy as np
 
 def train(tom_net, optimizer, train_loader, eval_loader, experiment_folder, writer, visualizer, dicts):
 
@@ -51,8 +51,9 @@ def evaluate(tom_net, eval_loader, visualizer=None, is_visualize=False,
 
     if is_visualize:
         for n in range(16):
+            _, past_actions = np.where(ev_results['past_traj'][n, 0, :, :, :, 6:].sum((1, 2)) == 121)
             agent_xys = np.where(ev_results['past_traj'][n, 0, :, :, :, 5] == 1)
-            visualizer.get_past_traj(ev_results['past_traj'][n][0][0], agent_xys, 0, sample_num=n)
+            visualizer.get_past_traj(ev_results['past_traj'][n][0][0], agent_xys, past_actions, 0, sample_num=n)
             visualizer.get_curr_state(ev_results['curr_state'][n], 0, sample_num=n)
             visualizer.get_action(ev_results['pred_actions'][n], 0, sample_num=n)
             visualizer.get_prefer(ev_results['pred_consumption'][n], 0, sample_num=n)

@@ -55,8 +55,31 @@ class Visualizer:
         self.height = height
         self.width = width
 
+    def _get_pt(self, x, y, action=0):
+        left = (y * self.grid_per_pixel, x * self.grid_per_pixel + 4), (
+            y * self.grid_per_pixel + 6, x * self.grid_per_pixel + 7), (
+                 self.grid_per_pixel * y + 6, x * self.grid_per_pixel + 1)
 
-    def get_past_traj(self, obs, agent_xys, epoch, foldername='past_traj', sample_num=0):
+        right = (y * self.grid_per_pixel + 2, x * self.grid_per_pixel + 7), (
+            y * self.grid_per_pixel + 2, x * self.grid_per_pixel + 1), (
+            self.grid_per_pixel * y + 8, self.grid_per_pixel * x + 4)
+
+        up = (y * self.grid_per_pixel + 7, x * self.grid_per_pixel + 6), (
+            y * self.grid_per_pixel + 1, x * self.grid_per_pixel + 6), (
+                y * self.grid_per_pixel + 4, x * self.grid_per_pixel)
+
+        down = (y * self.grid_per_pixel + 7, x * self.grid_per_pixel + 1), (
+            y * self.grid_per_pixel + 1, x * self.grid_per_pixel + 1), (
+                   y * self.grid_per_pixel + 4, x * self.grid_per_pixel + 7)
+        actions = [0, down, right, up, left]
+        if action == 0:
+            return -100
+        else:
+            pt = actions[action]
+        pt = np.array([pt])
+        return pt
+
+    def get_past_traj(self, obs, agent_xys, past_actions, epoch, foldername='past_traj', sample_num=0):
 
         palette = copy.deepcopy(self.palette) #black, #blue, #pink, #orange, #green, #skin, # white
         vis_obs = np.full((self.grid_per_pixel * self.height,
@@ -76,8 +99,11 @@ class Visualizer:
                     clr = copy.deepcopy(palette[i])
                     clr[0] -= 255 / (ord[n] + 1)
                     clr[1] -= 255 / (ord[n] + 1)
-                    a = np.array([(x*8-4,y*8-8),(x*8-2,y*8-2),(x*8-6,y*8-2)])
-                    cv2.drawContours(vis_obs, a, 0, (0,0,255), -1)
+                    pt = self._get_pt(x, y, past_actions[n])
+                    if np.sum(pt) < 0:
+                        continue
+                    else:
+                        cv2.drawContours(vis_obs, [pt], 0, clr, -1)
                     # vis_obs[x * self.grid_per_pixel: (x + 1) * self.grid_per_pixel,
                     # y * self.grid_per_pixel : (y + 1) * self.grid_per_pixel, :] = clr
                 else:
@@ -180,36 +206,6 @@ class Visualizer:
             os.makedirs(os.path.join(self.output_dir, str(sample_num), foldername))
 
         cv2.imwrite(output_file, vis_obs)
-
-    def get_sr2(self, obs, sr_preds, epoch, foldername='sr', sample_num=0):
-        palette = copy.deepcopy(self.palette)
-        vis_obs = np.full((self.grid_per_pixel * self.height,
-                           self.grid_per_pixel * self.width, 3),
-                          255, dtype=np.uint8)
-        for i in range(7):
-            if i != 6:
-                xy_object = np.where(obs[:, :, i] == 1)
-            else:
-                xy_object = np.where(sr_preds[-1, : , :] != 0)
-
-            xs, ys = xy_object
-            for x, y in zip(xs, ys):
-                if i == 6:
-                    palette[i][0] -= 255 * sr_preds[-1, x, y]
-                    palette[i][1] -= 255 * sr_preds[-1 ,x, y]
-                vis_obs[x * self.grid_per_pixel: (x + 1) * self.grid_per_pixel,
-                y * self.grid_per_pixel : (y + 1) * self.grid_per_pixel, :] = palette[i]
-
-        tozero = len(str(self.max_epoch)) - len(str(epoch))
-
-        fn = tozero * '0' + str(epoch) + '.jpg'
-        output_file = os.path.join(self.output_dir, str(sample_num), foldername, fn)
-
-        if not os.path.exists(os.path.join(self.output_dir, str(sample_num), foldername)):
-            os.makedirs(os.path.join(self.output_dir, str(sample_num), foldername))
-
-        cv2.imwrite(output_file, vis_obs)
-
 
     def get_char(self, e_char, most_act, count_act, epoch, foldername='e_char'):
         color_palette = np.array([[0, 0, 1], [1, 0, 0], [0, 1, 0], [1, 1, 0], [204 / 255, 0, 204 / 255]])
