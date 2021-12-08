@@ -94,7 +94,7 @@ class Storage(object):
         self.current_state = np.zeros(self.current_state.shape)
         self.target_action = np.zeros(self.target_action.shape)
 
-        self.target_prefer = np.zeros(self.target_preference.shape)
+        self.target_preference = np.zeros(self.target_preference.shape)
         self.target_sr = np.zeros(self.target_sr.shape)
         self.target_v = np.zeros(self.target_value.shape)
 

@@ -207,15 +207,34 @@ class Visualizer:
 
         cv2.imwrite(output_file, vis_obs)
 
-    def get_char(self, e_char, most_act, count_act, epoch, foldername='e_char'):
+    def get_action_char(self, e_char, most_act, count_act, epoch, foldername='action_e_char'):
         color_palette = np.array([[0, 0, 1], [1, 0, 0], [0, 1, 0], [1, 1, 0], [204 / 255, 0, 204 / 255]])
         colors = color_palette[most_act] * np.reshape(count_act, (-1, 1))
         plt.figure()
         plt.scatter(e_char[:, 0], e_char[:, 1], c=colors)
+
         tozero = len(str(self.max_epoch)) - len(str(epoch))
 
         fn = tozero * '0' + str(epoch) + '.jpg'
         output_file = os.path.join(self.output_dir,  foldername, fn)
+
+        if not os.path.exists(os.path.join(self.output_dir, foldername)):
+            os.makedirs(os.path.join(self.output_dir, foldername))
+        plt.savefig(output_file)
+
+    def get_consume_char(self, e_char, preference, epoch, foldername='consume_e_char'):
+        color_palette = ['blue', 'magenta', 'orange', 'limegreen']
+        preference_index = np.argmax(preference, axis=-1)
+
+        colors = [color_palette[i] for i in preference_index]
+        plt.figure()
+        plt.scatter(e_char[:, 0], e_char[:, 1], c=colors)
+
+
+        tozero = len(str(self.max_epoch)) - len(str(epoch))
+
+        fn = tozero * '0' + str(epoch) + '.jpg'
+        output_file = os.path.join(self.output_dir, foldername, fn)
 
         if not os.path.exists(os.path.join(self.output_dir, foldername)):
             os.makedirs(os.path.join(self.output_dir, foldername))

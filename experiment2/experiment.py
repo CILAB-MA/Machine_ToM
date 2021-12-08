@@ -40,7 +40,7 @@ def train(tom_net, optimizer, train_loader, eval_loader, experiment_folder, writ
 
 
 def evaluate(tom_net, eval_loader, visualizer=None, is_visualize=False,
-             most_act=None, count_act=None):
+             most_act=None, count_act=None, preference=None):
     '''
     we provide the base result of figure 2,
     but if you want to show the other results,
@@ -59,7 +59,8 @@ def evaluate(tom_net, eval_loader, visualizer=None, is_visualize=False,
             visualizer.get_prefer(ev_results['pred_consumption'][n], 0, sample_num=n)
             visualizer.get_sr(ev_results['curr_state'][n], ev_results['pred_sr'][n], 0, sample_num=n)
 
-        visualizer.get_char(ev_results['e_char'], most_act, count_act, 0)
+        visualizer.get_action_char(ev_results['e_char'], most_act, count_act, 0)
+        visualizer.get_consume_char(ev_results['e_char'], preference, 0)
     return ev_results
 
 
@@ -103,5 +104,6 @@ def run_experiment(num_epoch, main_experiment, sub_experiment, batch_size, lr,
     test_dataset = dataset.ToMDataset(**test_data)
     test_loader = DataLoader(test_dataset, batch_size=len(test_dataset), shuffle=False)
     most_act, count_act = eval_storage.get_most_act()
+    preference = eval_storage.target_preference
     ev_results = evaluate(tom_net, test_loader, visualizer, is_visualize=True,
-                          most_act=most_act, count_act=count_act)
+                          most_act=most_act, count_act=count_act, preference=preference)
