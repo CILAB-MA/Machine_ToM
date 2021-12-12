@@ -54,6 +54,7 @@ class CharNet(nn.Module):
         self.relu = nn.ReLU(inplace=True)
         self.lstm = nn.LSTM(32, 64)
         self.avgpool = nn.AvgPool2d(11)
+        self.fc64_2 = nn.Linear(num_step * 64, 2)
         self.fc64_8 = nn.Linear(64, 8)
         self.fc32_2 = nn.Linear(32, 2)
         self.fc32_8 = nn.Linear(32, 8)
