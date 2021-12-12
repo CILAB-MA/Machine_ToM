@@ -2,6 +2,8 @@ import torch.nn as nn
 import torch as tr
 import torch.nn.functional as F
 
+def cross_entropy_with_soft_label(pred, targ):
+    return -(targ * pred.log()).sum(dim=-1).mean()
 
 class ResNetBlock(nn.Module):
     expansion = 1
@@ -40,7 +42,7 @@ class softmax_SR(nn.Module):
         return sr
 
 class CharNet(nn.Module):
-    def __init__(self, num_past, num_input, num_exp=1):
+    def __init__(self, num_past, num_input, num_step, num_exp=1):
         super(CharNet, self).__init__()
         self.num_exp = num_exp
         self.conv1 = ResNetBlock(num_input, 4, 1)
@@ -50,19 +52,18 @@ class CharNet(nn.Module):
         self.conv5 = ResNetBlock(32, 32, 1)
         self.bn = nn.BatchNorm2d(32)
         self.relu = nn.ReLU(inplace=True)
-        self.lstm = nn.LSTMCell(32, 64)
+        self.lstm = nn.LSTM(32, 64)
         self.avgpool = nn.AvgPool2d(11)
-        self.fc64_2 = nn.Linear(64, 2)
         self.fc64_8 = nn.Linear(64, 8)
         self.fc32_2 = nn.Linear(32, 2)
         self.fc32_8 = nn.Linear(32, 8)
         self.hidden_size = 64
 
     def init_hidden(self, batch_size):
-        return (tr.zeros(batch_size, 64, device='cuda'),
-                tr.zeros(batch_size, 64, device='cuda'))
+        return (tr.zeros(1, batch_size, 64, device='cuda'),
+                tr.zeros(1, batch_size, 64, device='cuda'))
 
-    def forward(self, obs):
+    def forward(self, obs, done):
         # batch, num_past, num_step, channel, height, width
         b, num_past, num_step, c, h, w = obs.shape
         past_e_char = []
@@ -85,21 +86,13 @@ class CharNet(nn.Module):
                 x = x.view(num_step, b, -1)
                 x = x.transpose(1, 0)
                 x = self.fc32_2(x)  ## batch, output
+                e_char_sum = x
             else:
-                outs = []
-                for step in range(num_step):
-                    next_h, next_c = self.lstm(x.view(num_step, b, -1)[step], prev_h)
-                    outs.append(next_h)
-                x = tr.stack(outs, dim=0) ## step, batch, output
-                x = x.transpose(1, 0) ## batch, step, output
-                x = self.fc64_2(x) ## batch, output
 
-            # sum the each step e_char
-            e_char = []
-            for i in range(len(x)):
-                e_char.append(sum(x[i]))
-            e_char_sum = tr.stack(e_char, dim=0)
-            final_e_char = e_char_sum
+                outs, h = self.lstm(x.view(num_step, b, -1), prev_h)
+                outs = outs.transpose(0, 1).reshape(b, -1) ## batch, step * output
+                e_char_sum = self.fc64_2(outs) ## batch, output
+                final_e_char = e_char_sum
 
             if self.num_exp == 2 or self.num_exp == 3:
                 ## stack_num_past
@@ -119,10 +112,10 @@ class CharNet(nn.Module):
         return final_e_char
 
 class PredNet(nn.Module):
-    def __init__(self, num_past, num_input, device):
+    def __init__(self, num_past, num_input, num_exp, num_step, device):
         super(PredNet, self).__init__()
 
-        self.e_char = CharNet(num_past, num_input, num_exp=2)
+        self.e_char = CharNet(num_past, num_input, num_exp=num_exp, num_step=num_step)
         self.conv1 = ResNetBlock(8, 8, 1)
         self.conv2 = ResNetBlock(8, 16, 1)
         self.conv3 = ResNetBlock(16, 16, 1)
@@ -164,14 +157,14 @@ class PredNet(nn.Module):
     def init_hidden(self, batch_size):
         return self.e_char.init_hidden(batch_size)
 
-    def forward(self, past_traj, obs):
+    def forward(self, past_traj, obs, done):
         b, h, w, c = obs.shape
         obs = obs.permute(0, 3, 1, 2)
         _, _, s, _, _, _ = past_traj.shape
         if s == 0:
             e_char = tr.zeros((b, 2, h, w), device=self.device)
         else:
-            e_char_2d = self.e_char(past_traj)
+            e_char_2d = self.e_char(past_traj, done)
             e_char = e_char_2d.unsqueeze(-1).unsqueeze(-1)
             e_char = e_char.repeat(1, 1, h, w)
         x_concat = tr.cat([e_char, obs], axis=1)
@@ -210,13 +203,13 @@ class PredNet(nn.Module):
             target_consume_onehot = target_consume.float().cuda()
             target_sr = target_sr.float().cuda()
             target_v = target_v.float().cuda()
+            dones = dones.float().cuda()
 
-
-            pred_action, pred_consumption, pred_sr, e_char_2d = self.forward(past_traj, curr_state)
+            pred_action, pred_consumption, pred_sr, e_char_2d = self.forward(past_traj, curr_state, dones)
             action_loss = criterion_nll(pred_action, target_action)
             consumption_loss = criterion_bce(pred_consumption, target_consume_onehot)
-            sr_loss = criterion_kl(pred_sr.log().transpose(1, 2), target_sr.flatten(1, 2))
-
+            #sr_loss = criterion_kl(pred_sr.log().transpose(1, 2), target_sr.flatten(1, 2))
+            sr_loss = cross_entropy_with_soft_label(pred_sr.transpose(1, 2), target_sr.flatten(1, 2))
             optim.zero_grad()
             loss = action_loss + consumption_loss + sr_loss
             loss.mean().backward()
@@ -264,7 +257,7 @@ class PredNet(nn.Module):
                 dones = tr.tensor(dones, dtype=tr.int, device=self.device)
 
 
-            pred_action, pred_consumption, pred_sr, e_char = self.forward(past_traj, curr_state)
+            pred_action, pred_consumption, pred_sr, e_char = self.forward(past_traj, curr_state, dones)
             action_loss = criterion_nll(pred_action, target_action)
             consumption_loss = criterion_bce(pred_consumption, target_consume_onehot)
             sr_loss = criterion_kl(pred_sr.log().transpose(1, 2), target_sr.flatten(1, 2))
@@ -284,16 +277,21 @@ class PredNet(nn.Module):
             action_acc += tr.sum(pred_action_ind == target_action).item()
             consumption_acc += tr.sum(pred_consumption_ind == targ_consumption_ind).item()
 
-
         dicts = dict()
+        targets = dict()
+
         if is_visualize:
+            diag = tr.eye(5)
+            target_action_onehot = diag[target_action[:16]]
             dicts['past_traj'] = past_traj[:16].cpu().numpy()
             dicts['curr_state'] = curr_state[:16].cpu().numpy()
             dicts['pred_actions'] = pred_action[:16].cpu().numpy()
             dicts['pred_consumption'] = pred_consumption[:16].cpu().numpy()
             dicts['pred_sr'] = pred_sr[:16].reshape(-1, 3, 11, 11).cpu().numpy()
             dicts['e_char'] = e_char.cpu().numpy()
-
+            targets['targ_actions'] = target_action_onehot.cpu().numpy()
+            targets['targ_consumption'] = target_consume_onehot[:16].cpu().numpy()
+            targets['targ_sr'] = target_sr[:16].reshape(-1, 3, 11, 11).cpu().numpy()
 
         dicts['action_loss'] = a_loss / (i + 1)
         dicts['consumption_loss'] = c_loss / (i + 1)
@@ -303,4 +301,5 @@ class PredNet(nn.Module):
         dicts['action_acc'] = action_acc / 1000
         dicts['consumption_acc'] = consumption_acc / 1000
 
-        return dicts
+
+        return dicts, targets

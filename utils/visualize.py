@@ -192,8 +192,8 @@ class Visualizer:
             xs, ys = xy_object
             for x, y in zip(xs, ys):
                 if i == 6:
-                    palette[i][0] -= 255 * sr_preds[-1, x, y]
-                    palette[i][1] -= 255 * sr_preds[-1 ,x, y]
+                    palette[i][0] -= 255 * np.log(sr_preds[-1, x, y])
+                    palette[i][1] -= 255 * np.log(sr_preds[-1 ,x, y])
                 vis_obs[x * self.grid_per_pixel: (x + 1) * self.grid_per_pixel,
                 y * self.grid_per_pixel : (y + 1) * self.grid_per_pixel, :] = palette[i]
 

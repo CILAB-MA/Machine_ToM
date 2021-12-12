@@ -40,14 +40,14 @@ def train(tom_net, optimizer, train_loader, eval_loader, experiment_folder, writ
 
 
 def evaluate(tom_net, eval_loader, visualizer=None, is_visualize=False,
-             most_act=None, count_act=None, preference=None):
+             preference=None):
     '''
     we provide the base result of figure 2,
     but if you want to show the other results,
     run the inference.py after you have the models.
     '''
     with tr.no_grad():
-        ev_results = tom_net.evaluate(eval_loader, is_visualize=is_visualize)
+        ev_results, ev_targs = tom_net.evaluate(eval_loader, is_visualize=is_visualize)
 
     if is_visualize:
         for n in range(16):
@@ -59,7 +59,11 @@ def evaluate(tom_net, eval_loader, visualizer=None, is_visualize=False,
             visualizer.get_prefer(ev_results['pred_consumption'][n], 0, sample_num=n)
             visualizer.get_sr(ev_results['curr_state'][n], ev_results['pred_sr'][n], 0, sample_num=n)
 
-        visualizer.get_action_char(ev_results['e_char'], most_act, count_act, 0)
+            visualizer.get_action(ev_targs['targ_actions'][n], 1, sample_num=n)
+            visualizer.get_prefer(ev_targs['targ_consumption'][n], 1, sample_num=n)
+            visualizer.get_sr(ev_results['curr_state'][n], ev_targs['targ_sr'][n], 1, sample_num=n)
+
+
         visualizer.get_consume_char(ev_results['e_char'], preference, 0)
     return ev_results
 
@@ -97,13 +101,17 @@ def run_experiment(num_epoch, main_experiment, sub_experiment, batch_size, lr,
     train(tom_net, optimizer, train_loader, eval_loader, experiment_folder,
           summary_writer, visualizer, dicts)
 
+    # Visualize Train
+    train_fixed_loader = DataLoader(train_dataset, batch_size=len(train_dataset), shuffle=False)
+    train_prefer = train_storage.target_preference
+    tr_results = evaluate(tom_net, train_fixed_loader, visualizer, is_visualize=True,
+                          preference=train_prefer)
     # Test
     eval_storage.reset()
     test_data = eval_storage.extract()
     test_data['exp'] = 'exp2'
     test_dataset = dataset.ToMDataset(**test_data)
     test_loader = DataLoader(test_dataset, batch_size=len(test_dataset), shuffle=False)
-    most_act, count_act = eval_storage.get_most_act()
     preference = eval_storage.target_preference
-    ev_results = evaluate(tom_net, test_loader, visualizer, is_visualize=True,
-                          most_act=most_act, count_act=count_act, preference=preference)
+    #ev_results = evaluate(tom_net, test_loader, visualizer, is_visualize=True,
+    #                      preference=preference)
