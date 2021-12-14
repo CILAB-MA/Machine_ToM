@@ -39,6 +39,7 @@ class softmax_SR(nn.Module):
 
     def forward(self, x):
         sr = F.softmax(x.reshape(x.size(0), x.size(1), -1), dim=2)
+        sr = sr.transpose(1, 2)
         return sr
 
 class CharNet(nn.Module):
@@ -194,7 +195,6 @@ class PredNet(nn.Module):
 
         criterion_nll = nn.NLLLoss()
         criterion_bce = nn.BCELoss()
-        criterion_kl = nn.KLDivLoss(reduction='batchmean')
 
         for i, batch in enumerate(data_loader):
             past_traj, curr_state, target_action, target_consume, target_sr, target_v, dones = batch
@@ -209,8 +209,7 @@ class PredNet(nn.Module):
             pred_action, pred_consumption, pred_sr, e_char_2d = self.forward(past_traj, curr_state, dones)
             action_loss = criterion_nll(pred_action, target_action)
             consumption_loss = criterion_bce(pred_consumption, target_consume_onehot)
-            #sr_loss = criterion_kl(pred_sr.log().transpose(1, 2), target_sr.flatten(1, 2))
-            sr_loss = cross_entropy_with_soft_label(pred_sr.transpose(1, 2), target_sr.flatten(1, 2))
+            sr_loss = cross_entropy_with_soft_label(pred_sr, target_sr.flatten(1, 2))
             optim.zero_grad()
             loss = action_loss + consumption_loss + sr_loss
             loss.mean().backward()
@@ -243,7 +242,6 @@ class PredNet(nn.Module):
 
         criterion_nll = nn.NLLLoss()
         criterion_bce = nn.BCELoss()
-        criterion_kl = nn.KLDivLoss(reduction='batchmean')
 
 
         for i, batch in enumerate(data_loader):
@@ -261,7 +259,7 @@ class PredNet(nn.Module):
             pred_action, pred_consumption, pred_sr, e_char = self.forward(past_traj, curr_state, dones)
             action_loss = criterion_nll(pred_action, target_action)
             consumption_loss = criterion_bce(pred_consumption, target_consume_onehot)
-            sr_loss = criterion_kl(pred_sr.log().transpose(1, 2), target_sr.flatten(1, 2))
+            sr_loss = cross_entropy_with_soft_label(pred_sr, target_sr.flatten(1, 2))
 
             loss = action_loss + consumption_loss + sr_loss
 
@@ -288,11 +286,11 @@ class PredNet(nn.Module):
             dicts['curr_state'] = curr_state[:16].cpu().numpy()
             dicts['pred_actions'] = pred_action[:16].cpu().numpy()
             dicts['pred_consumption'] = pred_consumption[:16].cpu().numpy()
-            dicts['pred_sr'] = pred_sr[:16].reshape(-1, 3, 11, 11).cpu().numpy()
+            dicts['pred_sr'] = pred_sr[:16].reshape(-1, 11, 11, 3).cpu().numpy()
             dicts['e_char'] = e_char.cpu().numpy()
             targets['targ_actions'] = target_action_onehot.cpu().numpy()
             targets['targ_consumption'] = target_consume_onehot[:16].cpu().numpy()
-            targets['targ_sr'] = target_sr[:16].reshape(-1, 3, 11, 11).cpu().numpy()
+            targets['targ_sr'] = target_sr[:16].cpu().numpy()
 
         dicts['action_loss'] = a_loss / (i + 1)
         dicts['consumption_loss'] = c_loss / (i + 1)

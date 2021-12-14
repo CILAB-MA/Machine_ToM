@@ -183,17 +183,18 @@ class Visualizer:
         vis_obs = np.full((self.grid_per_pixel * self.height,
                            self.grid_per_pixel * self.width, 3),
                           255, dtype=np.uint8)
-        for i in range(7):
+        for i in range(6, 0 , -1):
             if i != 6:
                 xy_object = np.where(obs[:, :, i] == 1)
             else:
-                xy_object = np.where(sr_preds[-1, : , :] != 0)
+                xy_object = np.where(sr_preds[: , :, -1] != 0)
 
             xs, ys = xy_object
             for x, y in zip(xs, ys):
                 if i == 6:
-                    palette[i][0] -= 255 * np.log(sr_preds[-1, x, y])
-                    palette[i][1] -= 255 * np.log(sr_preds[-1 ,x, y])
+                    palette = copy.deepcopy(self.palette)
+                    palette[i][0] -= 255 * sr_preds[x, y, -1]
+                    palette[i][1] -= 255 * sr_preds[x, y, -1]
                 vis_obs[x * self.grid_per_pixel: (x + 1) * self.grid_per_pixel,
                 y * self.grid_per_pixel : (y + 1) * self.grid_per_pixel, :] = palette[i]
 
