@@ -27,7 +27,7 @@ def make_folder():
         os.makedirs(folder_dir)
     return folder_dir
 
-def make_pool(agent_type, move_penalty, alpha, num_agent=1000):
+def make_pool(agent_type, move_penalty, alpha, num_agent):
     agent_template = agent.agent_type[agent_type]
     population = []
 
