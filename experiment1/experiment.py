@@ -51,11 +51,11 @@ def evaluate(tom_net, eval_loader, visualizer=None, is_visualize=False,
         visualizer.get_char(ev_results['e_char'], most_act, count_act, 0)
     return ev_results
 
-def run_experiment(num_epoch, main_experiment, sub_experiment, batch_size, lr,
+def run_experiment(num_epoch, main_experiment, sub_experiment, num_agent, batch_size, lr,
                    experiment_folder, alpha, save_freq):
 
     exp_kwargs, env_kwargs, model_kwargs, agent_kwargs = get_configs(sub_experiment)
-    population = utils.make_pool('random', exp_kwargs['move_penalty'], alpha)
+    population = utils.make_pool('random', exp_kwargs['move_penalty'], alpha, num_agent)
     env = GridWorldEnv(env_kwargs)
     tom_net = model.PredNet(**model_kwargs)
 

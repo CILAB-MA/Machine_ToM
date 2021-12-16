@@ -11,6 +11,7 @@ def parse_args():
     parser.add_argument('--num_epoch', '-e', type=int, default=100)
     parser.add_argument('--main_exp', '-me', type=int, default=1)
     parser.add_argument('--sub_exp', '-se', type=int, default=1)
+    parser.add_argument('--num_agent', '-na', type=int, default=1000)
     parser.add_argument('--batch_size', '-b', type=int, default=16)
     parser.add_argument('--lr', '-l', type=float, default=1e-4)
     parser.add_argument('--alpha', '-a', type=float, default=0.01)
@@ -22,8 +23,9 @@ def parse_args():
 def main(args):
     experiment_folder = utils.make_folder()
     EXPERIMENTS[args.main_exp - 1].run_experiment(num_epoch=args.num_epoch, main_experiment=args.main_exp,
-                                              sub_experiment=args.sub_exp, batch_size=args.batch_size,
-                                              lr=args.lr, experiment_folder=experiment_folder,
+                                              sub_experiment=args.sub_exp, num_agent=args.num_agent,
+                                              batch_size=args.batch_size, lr=args.lr,
+                                              experiment_folder=experiment_folder,
                                               alpha=args.alpha, save_freq=args.save_freq)
 
 
