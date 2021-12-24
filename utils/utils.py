@@ -40,7 +40,6 @@ def make_pool(agent_type, move_penalty, alpha, num_agent):
         for idx_alpha, num in enumerate(num_agent_list):
             for _ in range(num):
                 population.append(agent_template(alpha=alpha[idx_alpha], num_action=5, move_penalty=move_penalty))
-        np.random.shuffle(population)
     else:
         assert ('Your alpha type is not proper type. We expect list, int or float. '
                 'But we get the {}. Also check num_agent'.format(type(alpha)))
