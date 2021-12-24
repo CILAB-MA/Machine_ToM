@@ -1,3 +1,4 @@
+import numpy as np
 import torch as tr
 import os
 import datetime as dt
@@ -34,10 +35,12 @@ def make_pool(agent_type, move_penalty, alpha, num_agent):
     if (type(alpha) == int) or (type(alpha) == float):
         for _ in range(num_agent):
             population.append(agent_template(alpha=alpha, num_action=5, move_penalty=move_penalty))
-    elif type(alpha) == list:
-        for i, group in enumerate(num_agent):
-            for _ in range(group):
-                population.append(agent_template(alpha=alpha[i], num_action=5, move_penalty=move_penalty))
+    elif type(alpha) == np.ndarray:
+        num_agent_list = [num_agent] * len(alpha)
+        for idx_alpha, num in enumerate(num_agent_list):
+            for _ in range(num):
+                population.append(agent_template(alpha=alpha[idx_alpha], num_action=5, move_penalty=move_penalty))
+        np.random.shuffle(population)
     else:
         assert ('Your alpha type is not proper type. We expect list, int or float. '
                 'But we get the {}. Also check num_agent'.format(type(alpha)))
