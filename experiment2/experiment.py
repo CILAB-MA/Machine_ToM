@@ -74,6 +74,7 @@ def run_experiment(num_epoch, main_experiment, sub_experiment, num_agent, batch_
     exp_kwargs, env_kwargs, model_kwargs, agent_type = get_configs(sub_experiment)
     population = utils.make_pool(agent_type, exp_kwargs['move_penalty'], alpha, num_agent)
     env = GridWorldEnv(env_kwargs)
+    model_kwargs['num_agent'] = num_agent
     tom_net = model.PredNet(**model_kwargs)
 
     if model_kwargs['device'] == 'cuda':
@@ -83,7 +84,7 @@ def run_experiment(num_epoch, main_experiment, sub_experiment, num_agent, batch_
 
     # Make the Dataset
     train_storage = Storage(env, population, exp_kwargs['num_past'], exp_kwargs['num_step'])
-    eval_storage = Storage(env, population, exp_kwargs['num_past'], exp_kwargs['num_step'])
+    eval_storage = Storage(env, population[:1000], exp_kwargs['num_past'], exp_kwargs['num_step'])
     train_data = train_storage.extract()
     train_data['exp'] = 'exp2'
     eval_data = eval_storage.extract()
@@ -102,7 +103,7 @@ def run_experiment(num_epoch, main_experiment, sub_experiment, num_agent, batch_
           summary_writer, visualizer, dicts)
 
     # Visualize Train
-    train_fixed_loader = DataLoader(train_dataset, batch_size=len(train_dataset), shuffle=False)
+    train_fixed_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=False)
     train_prefer = train_storage.target_preference
     tr_results = evaluate(tom_net, train_fixed_loader, visualizer, is_visualize=True,
                           preference=train_prefer)
@@ -111,7 +112,7 @@ def run_experiment(num_epoch, main_experiment, sub_experiment, num_agent, batch_
     test_data = eval_storage.extract()
     test_data['exp'] = 'exp2'
     test_dataset = dataset.ToMDataset(**test_data)
-    test_loader = DataLoader(test_dataset, batch_size=len(test_dataset), shuffle=False)
+    test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False)
     preference = eval_storage.target_preference
     #ev_results = evaluate(tom_net, test_loader, visualizer, is_visualize=True,
     #                      preference=preference)

@@ -61,7 +61,7 @@ class Storage(object):
                 action = copy.deepcopy(target_action)
                 sr = np.zeros((11, 11, 3))
                 sr[self.env.agent_xy[0], self.env.agent_xy[1], :] = 1
-                gamma = np.array([0.5 , 0.9, 0.99])
+                gamma = np.array([0.5, 0.9, 0.99])
                 for s in range(self.env.epi_max_step):
                     obs, _, done, info = self.env.step(action)
                     sr[self.env.agent_xy[0], self.env.agent_xy[1], :] = gamma ** (s + 1)

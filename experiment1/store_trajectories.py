@@ -45,6 +45,7 @@ class Storage(object):
                 target_action = agent.act(curr_obs)
                 self.current_state[agent_index] = curr_obs
                 self.target_action[agent_index, target_action] = 1
+            print('Agent {} make complete!'.format(agent_index))
 
         return dict(episodes=self.past_trajectories,
                     curr_state=self.current_state,

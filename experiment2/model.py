@@ -90,7 +90,6 @@ class CharNet(nn.Module):
                 x = self.fc32_2(x)  ## batch, output
                 e_char_sum = x
             else:
-
                 outs, h = self.lstm(x.view(num_step, b, -1), prev_h)
                 outs = outs.transpose(0, 1).reshape(b, -1) ## batch, step * output
                 e_char_sum = self.fc64_2(outs) ## batch, output
@@ -114,7 +113,7 @@ class CharNet(nn.Module):
         return final_e_char
 
 class PredNet(nn.Module):
-    def __init__(self, num_past, num_input, num_exp, num_step, device):
+    def __init__(self, num_past, num_input, num_exp, num_agent, num_step, device):
         super(PredNet, self).__init__()
 
         self.e_char = CharNet(num_past, num_input, num_exp=num_exp, num_step=num_step)
@@ -130,7 +129,7 @@ class PredNet(nn.Module):
         self.comsumption_fc = nn.Linear(32, 4)
         self.device = device
         self.softmax = nn.Softmax()
-
+        self.num_agent = num_agent
         self.action_head = nn.Sequential(
             nn.Conv2d(32, 32, 1, 1),
             nn.ReLU(inplace=True),
@@ -226,19 +225,20 @@ class PredNet(nn.Module):
             action_acc += tr.sum(pred_action_ind == target_action).item()
             consumption_acc += tr.sum(pred_consumption_ind == targ_consumption_ind).item()
 
-        dicts = dict(action_acc=action_acc / 1000, consumption_acc=consumption_acc / 1000,
+        dicts = dict(action_acc=action_acc / self.num_agent,
+                     consumption_acc=consumption_acc / self.num_agent,
                      action_loss=a_loss / (i + 1), consumption_loss=c_loss / (i + 1),
                      sr_loss=sr_loss / (i + 1), total_loss=tot_loss / (i + 1))
         return dicts
 
-    def evaluate(self, data_loader, is_visualize=False):
+    def evaluate(self, data_loader, is_visualize=False, num_agent=1000):
         tot_loss = 0
         a_loss = 0
         c_loss = 0
         s_loss = 0
-
         action_acc = 0
         consumption_acc = 0
+
 
         criterion_nll = nn.NLLLoss()
         criterion_bce = nn.BCELoss()
@@ -272,9 +272,10 @@ class PredNet(nn.Module):
             pred_consumption_ind = tr.argmax(pred_consumption, dim=-1)
             targ_consumption_ind = tr.argmax(target_consume_onehot, dim=-1)
 
-
             action_acc += tr.sum(pred_action_ind == target_action).item()
             consumption_acc += tr.sum(pred_consumption_ind == targ_consumption_ind).item()
+
+
 
         dicts = dict()
         targets = dict()
@@ -287,7 +288,7 @@ class PredNet(nn.Module):
             dicts['pred_actions'] = pred_action[:16].cpu().numpy()
             dicts['pred_consumption'] = pred_consumption[:16].cpu().numpy()
             dicts['pred_sr'] = pred_sr[:16].reshape(-1, 11, 11, 3).cpu().numpy()
-            dicts['e_char'] = e_char.cpu().numpy()
+            dicts['e_char'] = e_char[:1000].cpu().numpy()
             targets['targ_actions'] = target_action_onehot.cpu().numpy()
             targets['targ_consumption'] = target_consume_onehot[:16].cpu().numpy()
             targets['targ_sr'] = target_sr[:16].cpu().numpy()
@@ -297,8 +298,8 @@ class PredNet(nn.Module):
         dicts['sr_loss'] = s_loss / (i + 1)
         dicts['total_loss'] = tot_loss / (i + 1)
 
-        dicts['action_acc'] = action_acc / 1000
-        dicts['consumption_acc'] = consumption_acc / 1000
+        dicts['action_acc'] = action_acc / num_agent
+        dicts['consumption_acc'] = consumption_acc / num_agent
 
 
         return dicts, targets
