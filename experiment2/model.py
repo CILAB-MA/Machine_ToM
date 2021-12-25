@@ -281,17 +281,21 @@ class PredNet(nn.Module):
         targets = dict()
 
         if is_visualize:
+            if len(past_traj) < 16:
+                ind = len(past_traj)
+            else:
+                ind = 16
             diag = tr.eye(5)
-            target_action_onehot = diag[target_action[:16]]
-            dicts['past_traj'] = past_traj[:16].cpu().numpy()
-            dicts['curr_state'] = curr_state[:16].cpu().numpy()
-            dicts['pred_actions'] = pred_action[:16].cpu().numpy()
-            dicts['pred_consumption'] = pred_consumption[:16].cpu().numpy()
-            dicts['pred_sr'] = pred_sr[:16].reshape(-1, 11, 11, 3).cpu().numpy()
+            target_action_onehot = diag[target_action[:ind]]
+            dicts['past_traj'] = past_traj[:ind].cpu().numpy()
+            dicts['curr_state'] = curr_state[:ind].cpu().numpy()
+            dicts['pred_actions'] = pred_action[:ind].cpu().numpy()
+            dicts['pred_consumption'] = pred_consumption[:ind].cpu().numpy()
+            dicts['pred_sr'] = pred_sr[:ind].reshape(-1, 11, 11, 3).cpu().numpy()
             dicts['e_char'] = e_char[:1000].cpu().numpy()
             targets['targ_actions'] = target_action_onehot.cpu().numpy()
-            targets['targ_consumption'] = target_consume_onehot[:16].cpu().numpy()
-            targets['targ_sr'] = target_sr[:16].cpu().numpy()
+            targets['targ_consumption'] = target_consume_onehot[:ind].cpu().numpy()
+            targets['targ_sr'] = target_sr[:ind].cpu().numpy()
 
         dicts['action_loss'] = a_loss / (i + 1)
         dicts['consumption_loss'] = c_loss / (i + 1)
