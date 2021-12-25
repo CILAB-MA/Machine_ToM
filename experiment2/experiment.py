@@ -36,7 +36,6 @@ def train(tom_net, optimizer, train_loader, eval_loader, experiment_folder, writ
         )
         print(train_msg)
         print(eval_msg)
-        # TODO: ADD THE VISUALIZE PART
 
 
 def evaluate(tom_net, eval_loader, visualizer=None, is_visualize=False,
@@ -50,7 +49,8 @@ def evaluate(tom_net, eval_loader, visualizer=None, is_visualize=False,
         ev_results, ev_targs = tom_net.evaluate(eval_loader, is_visualize=is_visualize)
 
     if is_visualize:
-        for n in range(16):
+        indiv_length = len(ev_results['past_traj'])
+        for n in range(indiv_length):
             _, past_actions = np.where(ev_results['past_traj'][n, 0, :, :, :, 6:].sum((1, 2)) == 121)
             agent_xys = np.where(ev_results['past_traj'][n, 0, :, :, :, 5] == 1)
             visualizer.get_past_traj(ev_results['past_traj'][n][0][0], agent_xys, past_actions, 0, sample_num=n)
