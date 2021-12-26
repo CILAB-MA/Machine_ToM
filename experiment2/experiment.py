@@ -36,7 +36,6 @@ def train(tom_net, optimizer, train_loader, eval_loader, experiment_folder, writ
         )
         print(train_msg)
         print(eval_msg)
-        # TODO: ADD THE VISUALIZE PART
 
 
 def evaluate(tom_net, eval_loader, visualizer=None, is_visualize=False,
@@ -50,7 +49,8 @@ def evaluate(tom_net, eval_loader, visualizer=None, is_visualize=False,
         ev_results, ev_targs = tom_net.evaluate(eval_loader, is_visualize=is_visualize)
 
     if is_visualize:
-        for n in range(16):
+        indiv_length = len(ev_results['past_traj'])
+        for n in range(indiv_length):
             _, past_actions = np.where(ev_results['past_traj'][n, 0, :, :, :, 6:].sum((1, 2)) == 121)
             agent_xys = np.where(ev_results['past_traj'][n, 0, :, :, :, 5] == 1)
             visualizer.get_past_traj(ev_results['past_traj'][n][0][0], agent_xys, past_actions, 0, sample_num=n)
@@ -103,7 +103,7 @@ def run_experiment(num_epoch, main_experiment, sub_experiment, num_agent, batch_
           summary_writer, visualizer, dicts)
 
     # Visualize Train
-    train_fixed_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=False)
+    train_fixed_loader = DataLoader(train_dataset, batch_size=1000, shuffle=False)
     train_prefer = train_storage.target_preference
     tr_results = evaluate(tom_net, train_fixed_loader, visualizer, is_visualize=True,
                           preference=train_prefer)
@@ -112,7 +112,7 @@ def run_experiment(num_epoch, main_experiment, sub_experiment, num_agent, batch_
     test_data = eval_storage.extract()
     test_data['exp'] = 'exp2'
     test_dataset = dataset.ToMDataset(**test_data)
-    test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False)
+    test_loader = DataLoader(test_dataset, batch_size=1000, shuffle=False)
     preference = eval_storage.target_preference
     #ev_results = evaluate(tom_net, test_loader, visualizer, is_visualize=True,
     #                      preference=preference)

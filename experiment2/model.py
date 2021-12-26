@@ -90,25 +90,18 @@ class CharNet(nn.Module):
                 x = self.fc32_2(x)  ## batch, output
                 e_char_sum = x
             else:
-                outs, h = self.lstm(x.view(num_step, b, -1), prev_h)
+                outs, hidden = self.lstm(x.view(num_step, b, -1), prev_h)
                 outs = outs.transpose(0, 1).reshape(b, -1) ## batch, step * output
                 e_char_sum = self.fc64_2(outs) ## batch, output
+                past_e_char.append(e_char_sum)
                 final_e_char = e_char_sum
 
-            if self.num_exp == 2 or self.num_exp == 3:
-                ## stack_num_past
-                past_e_char.append(e_char_sum)
 
-                ## sum_num_past
-                past_e_char = tr.stack(past_e_char, dim=0)
-                past_e_char = past_e_char.transpose(1, 0)
-
-                past_e_char_sum = []
-                for i in range(len(past_e_char)):
-                    past_e_char_sum.append(sum(past_e_char[i]))
-
-                past_e_char_sum = tr.stack(past_e_char_sum, dim=0)
-                final_e_char = past_e_char_sum
+        if self.num_exp == 2 or self.num_exp == 3:
+            ## sum_num_past
+            past_e_char = tr.stack(past_e_char, dim=0)
+            past_e_char_sum = sum(past_e_char)
+            final_e_char = past_e_char_sum
 
         return final_e_char
 
@@ -243,7 +236,6 @@ class PredNet(nn.Module):
         criterion_nll = nn.NLLLoss()
         criterion_bce = nn.BCELoss()
 
-
         for i, batch in enumerate(data_loader):
             with tr.no_grad():
                 past_traj, curr_state, target_action, target_consume, target_sr, target_v, dones = batch
@@ -281,17 +273,21 @@ class PredNet(nn.Module):
         targets = dict()
 
         if is_visualize:
+            if len(past_traj) < 16:
+                ind = len(past_traj)
+            else:
+                ind = 16
             diag = tr.eye(5)
-            target_action_onehot = diag[target_action[:16]]
-            dicts['past_traj'] = past_traj[:16].cpu().numpy()
-            dicts['curr_state'] = curr_state[:16].cpu().numpy()
-            dicts['pred_actions'] = pred_action[:16].cpu().numpy()
-            dicts['pred_consumption'] = pred_consumption[:16].cpu().numpy()
-            dicts['pred_sr'] = pred_sr[:16].reshape(-1, 11, 11, 3).cpu().numpy()
+            target_action_onehot = diag[target_action[:ind]]
+            dicts['past_traj'] = past_traj[:ind].cpu().numpy()
+            dicts['curr_state'] = curr_state[:ind].cpu().numpy()
+            dicts['pred_actions'] = pred_action[:ind].cpu().numpy()
+            dicts['pred_consumption'] = pred_consumption[:ind].cpu().numpy()
+            dicts['pred_sr'] = pred_sr[:ind].reshape(-1, 11, 11, 3).cpu().numpy()
             dicts['e_char'] = e_char[:1000].cpu().numpy()
             targets['targ_actions'] = target_action_onehot.cpu().numpy()
-            targets['targ_consumption'] = target_consume_onehot[:16].cpu().numpy()
-            targets['targ_sr'] = target_sr[:16].cpu().numpy()
+            targets['targ_consumption'] = target_consume_onehot[:ind].cpu().numpy()
+            targets['targ_sr'] = target_sr[:ind].cpu().numpy()
 
         dicts['action_loss'] = a_loss / (i + 1)
         dicts['consumption_loss'] = c_loss / (i + 1)
