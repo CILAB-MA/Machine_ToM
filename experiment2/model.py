@@ -236,7 +236,6 @@ class PredNet(nn.Module):
         criterion_nll = nn.NLLLoss()
         criterion_bce = nn.BCELoss()
 
-
         for i, batch in enumerate(data_loader):
             with tr.no_grad():
                 past_traj, curr_state, target_action, target_consume, target_sr, target_v, dones = batch

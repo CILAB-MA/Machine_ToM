@@ -103,7 +103,7 @@ def run_experiment(num_epoch, main_experiment, sub_experiment, num_agent, batch_
           summary_writer, visualizer, dicts)
 
     # Visualize Train
-    train_fixed_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=False)
+    train_fixed_loader = DataLoader(train_dataset, batch_size=1000, shuffle=False)
     train_prefer = train_storage.target_preference
     tr_results = evaluate(tom_net, train_fixed_loader, visualizer, is_visualize=True,
                           preference=train_prefer)
@@ -112,7 +112,7 @@ def run_experiment(num_epoch, main_experiment, sub_experiment, num_agent, batch_
     test_data = eval_storage.extract()
     test_data['exp'] = 'exp2'
     test_dataset = dataset.ToMDataset(**test_data)
-    test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False)
+    test_loader = DataLoader(test_dataset, batch_size=1000, shuffle=False)
     preference = eval_storage.target_preference
     #ev_results = evaluate(tom_net, test_loader, visualizer, is_visualize=True,
     #                      preference=preference)
