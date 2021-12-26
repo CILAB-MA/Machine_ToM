@@ -90,25 +90,18 @@ class CharNet(nn.Module):
                 x = self.fc32_2(x)  ## batch, output
                 e_char_sum = x
             else:
-                outs, h = self.lstm(x.view(num_step, b, -1), prev_h)
+                outs, hidden = self.lstm(x.view(num_step, b, -1), prev_h)
                 outs = outs.transpose(0, 1).reshape(b, -1) ## batch, step * output
                 e_char_sum = self.fc64_2(outs) ## batch, output
+                past_e_char.append(e_char_sum)
                 final_e_char = e_char_sum
 
-            if self.num_exp == 2 or self.num_exp == 3:
-                ## stack_num_past
-                past_e_char.append(e_char_sum)
 
-                ## sum_num_past
-                past_e_char = tr.stack(past_e_char, dim=0)
-                past_e_char = past_e_char.transpose(1, 0)
-
-                past_e_char_sum = []
-                for i in range(len(past_e_char)):
-                    past_e_char_sum.append(sum(past_e_char[i]))
-
-                past_e_char_sum = tr.stack(past_e_char_sum, dim=0)
-                final_e_char = past_e_char_sum
+        if self.num_exp == 2 or self.num_exp == 3:
+            ## sum_num_past
+            past_e_char = tr.stack(past_e_char, dim=0)
+            past_e_char_sum = sum(past_e_char)
+            final_e_char = past_e_char_sum
 
         return final_e_char
 
