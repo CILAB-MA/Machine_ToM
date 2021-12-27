@@ -1,5 +1,5 @@
 from torch.utils.data import Dataset
-
+import pickle
 
 class ToMDataset(Dataset):
 
@@ -25,5 +25,12 @@ class ToMDataset(Dataset):
         else:
             return self.episodes[ind], self.curr_state[ind], self.target_action[ind],\
                    self.target_prefer[ind], self.target_sr[ind], self.target_v[ind], self.dones[ind]
+
+
+def save_data(npy_data, number, fn='data'):
+    with open('data_{}.pickle'.format(number), 'wb') as f:
+        pickle.dump(npy_data, f)
+
+            
 
 
