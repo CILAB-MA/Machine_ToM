@@ -31,6 +31,6 @@ def save_data(npy_data, number, fn='data'):
     with open('data_{}.pickle'.format(number), 'wb') as f:
         pickle.dump(npy_data, f)
 
-            
+
 
 
