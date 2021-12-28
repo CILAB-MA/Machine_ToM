@@ -1,5 +1,5 @@
 from torch.utils.data import Dataset
-import pickle
+import numpy as np
 
 class ToMDataset(Dataset):
 
@@ -27,9 +27,17 @@ class ToMDataset(Dataset):
                    self.target_prefer[ind], self.target_sr[ind], self.target_v[ind], self.dones[ind]
 
 
-def save_data(npy_data, number, fn='data'):
-    with open('data_{}.pickle'.format(number), 'wb') as f:
-        pickle.dump(npy_data, f)
+def save_data(npy_data, number, alpha, fn=None):
+    keys = npy_data.keys()
+    past_shape = npy_data['episodes'].shape
+
+    folder_name = 'past_{}_step_{}_agent_{}_alpha_{}_number_{}/'.format(
+        past_shape[1], past_shape[2], past_shape[0], alpha, number
+    )
+    for key in keys:
+        if (key == 'dones') or (key == 'target_v'):
+            continue
+        np.save(folder_name + key, npy_data['key'])
 
 
 
