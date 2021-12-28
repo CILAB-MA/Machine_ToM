@@ -217,8 +217,8 @@ class PredNet(nn.Module):
 
         dicts = dict(action_acc=action_acc / self.num_agent,
                      consumption_acc=consumption_acc / self.num_agent,
-                     action_loss=a_loss / (i + 1), consumption_loss=c_loss / (i + 1),
-                     sr_loss=sr_loss / (i + 1), total_loss=tot_loss / (i + 1))
+                     action_loss=a_loss / len(data_loader), consumption_loss=c_loss / len(data_loader),
+                     sr_loss=sr_loss / len(data_loader), total_loss=tot_loss / len(data_loader))
         return dicts
 
     def evaluate(self, data_loader, is_visualize=False, num_agent=1000):

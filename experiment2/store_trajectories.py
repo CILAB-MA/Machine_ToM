@@ -74,7 +74,6 @@ class Storage(object):
             sr[:, :, 0] /= np.sum(sr[:, :, 0])
             sr[:, :, 1] /= np.sum(sr[:, :, 1])
             sr[:, :, 2] /= np.sum(sr[:, :, 2])
-            self.target_value[agent_index] = agent.V.reshape((11, 11, 1))
             self.current_state[agent_index] = curr_obs
             self.target_action[agent_index] = target_action
             if consumed != None:
@@ -86,8 +85,7 @@ class Storage(object):
         #))
         return dict(episodes=self.past_trajectories, curr_state=self.current_state,
                     target_action=self.target_action, target_prefer=self.target_preference,
-                    target_sr=self.target_sr, target_v=self.target_value,
-                    dones=self.dones)
+                    target_sr=self.target_sr)
 
     def reset(self):
         self.past_trajectories = np.zeros(self.past_trajectories.shape)
@@ -96,9 +94,7 @@ class Storage(object):
 
         self.target_preference = np.zeros(self.target_preference.shape)
         self.target_sr = np.zeros(self.target_sr.shape)
-        self.target_v = np.zeros(self.target_value.shape)
 
-        self.dones = np.zeros(self.dones.shape)
         self.action_count = np.zeros(self.action_count.shape)
 
 
