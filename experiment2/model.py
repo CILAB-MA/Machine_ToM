@@ -1,6 +1,7 @@
 import torch.nn as nn
 import torch as tr
 import torch.nn.functional as F
+from tqdm import tqdm
 
 def cross_entropy_with_soft_label(pred, targ):
     return -(targ * pred.log()).sum(dim=-1).mean()
@@ -186,7 +187,7 @@ class PredNet(nn.Module):
         criterion_nll = nn.NLLLoss()
         criterion_bce = nn.BCELoss()
 
-        for i, batch in enumerate(data_loader):
+        for batch in tqdm(data_loader, leave=False, total=len(data_loader)):
             past_traj, curr_state, target_action, target_consume, target_sr, target_v, dones = batch
             past_traj = past_traj.float().cuda()
             curr_state = curr_state.float().cuda()
