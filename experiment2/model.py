@@ -66,7 +66,7 @@ class CharNet(nn.Module):
         return (tr.zeros(1, batch_size, 64, device='cuda'),
                 tr.zeros(1, batch_size, 64, device='cuda'))
 
-    def forward(self, obs, done):
+    def forward(self, obs):
         # batch, num_past, num_step, channel, height, width
         b, num_past, num_step, c, h, w = obs.shape
         past_e_char = []
@@ -150,14 +150,14 @@ class PredNet(nn.Module):
     def init_hidden(self, batch_size):
         return self.e_char.init_hidden(batch_size)
 
-    def forward(self, past_traj, obs, done):
+    def forward(self, past_traj, obs):
         b, h, w, c = obs.shape
         obs = obs.permute(0, 3, 1, 2)
         _, _, s, _, _, _ = past_traj.shape
         if s == 0:
             e_char = tr.zeros((b, 2, h, w), device=self.device)
         else:
-            e_char_2d = self.e_char(past_traj, done)
+            e_char_2d = self.e_char(past_traj)
             e_char = e_char_2d.unsqueeze(-1).unsqueeze(-1)
             e_char = e_char.repeat(1, 1, h, w)
         x_concat = tr.cat([e_char, obs], axis=1)
@@ -188,16 +188,14 @@ class PredNet(nn.Module):
         criterion_bce = nn.BCELoss()
 
         for batch in tqdm(data_loader, leave=False, total=len(data_loader)):
-            past_traj, curr_state, target_action, target_consume, target_sr, target_v, dones = batch
+            past_traj, curr_state, target_action, target_consume, target_sr = batch
             past_traj = past_traj.float().cuda()
             curr_state = curr_state.float().cuda()
             target_action = target_action.long().cuda().squeeze(-1)
             target_consume_onehot = target_consume.float().cuda()
             target_sr = target_sr.float().cuda()
-            target_v = target_v.float().cuda()
-            dones = dones.float().cuda()
 
-            pred_action, pred_consumption, pred_sr, e_char_2d = self.forward(past_traj, curr_state, dones)
+            pred_action, pred_consumption, pred_sr, e_char_2d = self.forward(past_traj, curr_state)
             action_loss = criterion_nll(pred_action, target_action)
             consumption_loss = criterion_bce(pred_consumption, target_consume_onehot)
             sr_loss = cross_entropy_with_soft_label(pred_sr, target_sr.flatten(1, 2))
@@ -219,8 +217,8 @@ class PredNet(nn.Module):
 
         dicts = dict(action_acc=action_acc / self.num_agent,
                      consumption_acc=consumption_acc / self.num_agent,
-                     action_loss=a_loss / (i + 1), consumption_loss=c_loss / (i + 1),
-                     sr_loss=sr_loss / (i + 1), total_loss=tot_loss / (i + 1))
+                     action_loss=a_loss / len(data_loader), consumption_loss=c_loss / len(data_loader),
+                     sr_loss=sr_loss / len(data_loader), total_loss=tot_loss / len(data_loader))
         return dicts
 
     def evaluate(self, data_loader, is_visualize=False, num_agent=1000):
@@ -237,17 +235,14 @@ class PredNet(nn.Module):
 
         for i, batch in enumerate(data_loader):
             with tr.no_grad():
-                past_traj, curr_state, target_action, target_consume, target_sr, target_v, dones = batch
+                past_traj, curr_state, target_action, target_consume, target_sr = batch
                 past_traj = tr.tensor(past_traj, dtype=tr.float, device=self.device)
                 curr_state = tr.tensor(curr_state, dtype=tr.float, device=self.device)
                 target_action = tr.tensor(target_action.squeeze(-1), dtype=tr.long, device=self.device)
                 target_consume_onehot = tr.tensor(target_consume, dtype=tr.float, device=self.device)
                 target_sr = tr.tensor(target_sr, dtype=tr.float, device=self.device)
-                target_v = tr.tensor(target_v, dtype=tr.float, device=self.device)
-                dones = tr.tensor(dones, dtype=tr.int, device=self.device)
 
-
-            pred_action, pred_consumption, pred_sr, e_char = self.forward(past_traj, curr_state, dones)
+            pred_action, pred_consumption, pred_sr, e_char = self.forward(past_traj, curr_state)
             action_loss = criterion_nll(pred_action, target_action)
             consumption_loss = criterion_bce(pred_consumption, target_consume_onehot)
             sr_loss = cross_entropy_with_soft_label(pred_sr, target_sr.flatten(1, 2))
