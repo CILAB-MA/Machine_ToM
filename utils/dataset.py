@@ -1,5 +1,6 @@
 from torch.utils.data import Dataset
 import numpy as np
+import os
 
 class ToMDataset(Dataset):
 
@@ -31,14 +32,21 @@ def save_data(npy_data, number, alpha, fn=None):
     keys = npy_data.keys()
     past_shape = npy_data['episodes'].shape
 
-    folder_name = 'past_{}_step_{}_agent_{}_alpha_{}_number_{}/'.format(
+    folder_name = 'data/past_{}_step_{}_agent_{}_alpha_{}_number_{}/'.format(
         past_shape[1], past_shape[2], past_shape[0], alpha, number
     )
+
+    make_dirs(folder_name)
+
     for key in keys:
         if (key == 'dones') or (key == 'target_v'):
             continue
-        np.save(folder_name + key, npy_data['key'])
+        np.save(folder_name + key, npy_data[key])
 
 
-
-
+def make_dirs(path):
+    try:
+        os.makedirs(path)
+    except OSError:
+        if not os.path.isdir(path):
+            raise
