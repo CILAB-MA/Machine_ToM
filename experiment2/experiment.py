@@ -39,7 +39,7 @@ def train(tom_net, optimizer, train_loader, eval_loader, experiment_folder, writ
 
 
 def evaluate(tom_net, eval_loader, visualizer=None, is_visualize=False,
-             preference=None):
+             preference=None, mode='train'):
     '''
     we provide the base result of figure 2,
     but if you want to show the other results,
@@ -47,24 +47,27 @@ def evaluate(tom_net, eval_loader, visualizer=None, is_visualize=False,
     '''
     with tr.no_grad():
         ev_results, ev_targs = tom_net.evaluate(eval_loader, is_visualize=is_visualize)
-
+    if mode == 'train':
+        filename=0
+    else:
+        filename=2
     if is_visualize:
         indiv_length = len(ev_results['past_traj'])
         for n in range(indiv_length):
             _, past_actions = np.where(ev_results['past_traj'][n, 0, :, :, :, 6:].sum((1, 2)) == 121)
             agent_xys = np.where(ev_results['past_traj'][n, 0, :, :, :, 5] == 1)
-            visualizer.get_past_traj(ev_results['past_traj'][n][0][0], agent_xys, past_actions, 0, sample_num=n)
-            visualizer.get_curr_state(ev_results['curr_state'][n], 0, sample_num=n)
-            visualizer.get_action(ev_results['pred_actions'][n], 0, sample_num=n)
-            visualizer.get_prefer(ev_results['pred_consumption'][n], 0, sample_num=n)
-            visualizer.get_sr(ev_results['curr_state'][n], ev_results['pred_sr'][n], 0, sample_num=n)
+            visualizer.get_past_traj(ev_results['past_traj'][n][0][0], agent_xys, past_actions, filename, sample_num=n)
+            visualizer.get_curr_state(ev_results['curr_state'][n], filename, sample_num=n)
+            visualizer.get_action(ev_results['pred_actions'][n], filename, sample_num=n)
+            visualizer.get_prefer(ev_results['pred_consumption'][n], filename, sample_num=n)
+            visualizer.get_sr(ev_results['curr_state'][n], ev_results['pred_sr'][n], filename, sample_num=n)
 
-            visualizer.get_action(ev_targs['targ_actions'][n], 1, sample_num=n)
-            visualizer.get_prefer(ev_targs['targ_consumption'][n], 1, sample_num=n)
-            visualizer.get_sr(ev_results['curr_state'][n], ev_targs['targ_sr'][n], 1, sample_num=n)
+            visualizer.get_action(ev_targs['targ_actions'][n], filename + 1, sample_num=n)
+            visualizer.get_prefer(ev_targs['targ_consumption'][n], filename + 1, sample_num=n)
+            visualizer.get_sr(ev_results['curr_state'][n], ev_targs['targ_sr'][n], filename + 1, sample_num=n)
 
 
-        visualizer.get_consume_char(ev_results['e_char'], preference, 0)
+        visualizer.get_consume_char(ev_results['e_char'], preference, filename)
     return ev_results
 
 
@@ -114,5 +117,5 @@ def run_experiment(num_epoch, main_experiment, sub_experiment, num_agent, batch_
     test_dataset = dataset.ToMDataset(**test_data)
     test_loader = DataLoader(test_dataset, batch_size=1000, shuffle=False)
     preference = eval_storage.target_preference
-    #ev_results = evaluate(tom_net, test_loader, visualizer, is_visualize=True,
-    #                      preference=preference)
+    ev_results = evaluate(tom_net, test_loader, visualizer, is_visualize=True,
+                         preference=preference, mode='eval')
