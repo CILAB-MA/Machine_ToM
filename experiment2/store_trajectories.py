@@ -26,10 +26,7 @@ class Storage(object):
             for past_epi in range(self.num_past):
                 self.env.num_wall = np.random.randint(5)
                 if np.sum(custom_past) > 0:
-                    if len(custom_past.shape) == 5:
-                        obs = self.env.reset(custom=custom_past[agent_index][past_epi], wall=True)
-                    else:
-                        obs = self.env.reset(custom=custom_past[agent_index], wall=True)
+                    obs = self.env.reset(custom=custom_past[agent_index][past_epi], wall=True)
                 else:
                     obs = self.env.reset(wall=True)
                 #self.env.obs_well_show()
