@@ -242,10 +242,10 @@ class PredNet(nn.Module):
                 target_consume_onehot = tr.tensor(target_consume, dtype=tr.float, device=self.device)
                 target_sr = tr.tensor(target_sr, dtype=tr.float, device=self.device)
 
-            pred_action, pred_consumption, pred_sr, e_char = self.forward(past_traj, curr_state)
-            action_loss = criterion_nll(pred_action, target_action)
-            consumption_loss = criterion_bce(pred_consumption, target_consume_onehot)
-            sr_loss = cross_entropy_with_soft_label(pred_sr, target_sr.flatten(1, 2))
+                pred_action, pred_consumption, pred_sr, e_char = self.forward(past_traj, curr_state)
+                action_loss = criterion_nll(pred_action, target_action)
+                consumption_loss = criterion_bce(pred_consumption, target_consume_onehot)
+                sr_loss = cross_entropy_with_soft_label(pred_sr, target_sr.flatten(1, 2))
 
             loss = action_loss + consumption_loss + sr_loss
 
@@ -260,8 +260,6 @@ class PredNet(nn.Module):
 
             action_acc += tr.sum(pred_action_ind == target_action).item()
             consumption_acc += tr.sum(pred_consumption_ind == targ_consumption_ind).item()
-
-
 
         dicts = dict()
         targets = dict()
