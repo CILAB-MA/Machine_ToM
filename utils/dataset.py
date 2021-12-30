@@ -26,20 +26,19 @@ class ToMDataset(Dataset):
                    self.target_prefer[ind], self.target_sr[ind]
 
 
-def save_data(npy_data, number, alpha, fn=None):
+def save_data(npy_data, is_train, base_dir, eval=None):
     keys = npy_data.keys()
     past_shape = npy_data['episodes'].shape
 
-    folder_name = 'data/past_{}_step_{}_agent_{}_alpha_{}_number_{}/'.format(
-        past_shape[1], past_shape[2], past_shape[0], alpha, number
-    )
-
+    folder_name = os.path.join(base_dir, is_train)
+    if eval != None:
+        folder_name = os.path.join(folder_name, str(eval))
     make_dirs(folder_name)
 
     for key in keys:
         if (key == 'dones') or (key == 'target_v'):
             continue
-        np.save(folder_name + key, npy_data[key])
+        np.save(folder_name + '/' + key, npy_data[key])
 
 
 def make_dirs(path):
