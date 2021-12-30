@@ -1,7 +1,7 @@
 import numpy as np
 import cv2
 import copy
-
+from tqdm import tqdm
 
 class Storage(object):
 
@@ -19,8 +19,12 @@ class Storage(object):
         self.action_count = np.zeros([len(population), 5])
         self.num_step = num_step
 
-    def extract(self, custom_past=-100, custom_query=-100):
-        for agent_index, agent in tqdm(enumerate(self.population), total=len(self.population)):
+    def extract(self, custom_past=-100, custom_query=-100, slicing=None):
+        if slicing != None:
+            population = self.population[:slicing]
+        else:
+            population = self.population
+        for agent_index, agent in tqdm(enumerate(population), total=len(population)):
             self.env.prefer_reward = agent.reward
             self.env.preference = agent.most_prefer
             for past_epi in range(self.num_past):
