@@ -87,9 +87,9 @@ class Storage(object):
         #    self.past_trajectories.shape, self.current_state.shape, self.target_action.shape, self.target_preference.shape,
         #    self.target_sr.shape, self.target_policy.shape, self.dones.shape
         #))
-        return dict(episodes=self.past_trajectories, curr_state=self.current_state,
-                    target_action=self.target_action, target_prefer=self.target_preference,
-                    target_sr=self.target_sr)
+        return dict(episodes=self.past_trajectories[:len(population)], curr_state=self.current_state[:len(population)],
+                    target_action=self.target_action[:len(population)], target_prefer=self.target_preference[:len(population)],
+                    target_sr=self.target_sr[:len(population)])
 
     def reset(self):
         self.past_trajectories = np.zeros(self.past_trajectories.shape)

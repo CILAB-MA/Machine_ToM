@@ -199,10 +199,12 @@ class PredNet(nn.Module):
             action_loss = criterion_nll(pred_action, target_action)
             consumption_loss = criterion_bce(pred_consumption, target_consume_onehot)
             sr_loss = cross_entropy_with_soft_label(pred_sr, target_sr.flatten(1, 2))
+
             optim.zero_grad()
             loss = action_loss + consumption_loss + sr_loss
             loss.mean().backward()
             optim.step()
+
             pred_action_ind = tr.argmax(pred_action, dim=-1)
             pred_consumption_ind = tr.argmax(pred_consumption, dim=-1)
             targ_consumption_ind = tr.argmax(target_consume_onehot, dim=-1)
@@ -281,10 +283,10 @@ class PredNet(nn.Module):
             targets['targ_consumption'] = target_consume_onehot[:ind].cpu().numpy()
             targets['targ_sr'] = target_sr[:ind].cpu().numpy()
 
-        dicts['action_loss'] = a_loss / (i + 1)
-        dicts['consumption_loss'] = c_loss / (i + 1)
-        dicts['sr_loss'] = s_loss / (i + 1)
-        dicts['total_loss'] = tot_loss / (i + 1)
+        dicts['action_loss'] = a_loss / len(data_loader)
+        dicts['consumption_loss'] = c_loss / len(data_loader)
+        dicts['sr_loss'] = s_loss / len(data_loader)
+        dicts['total_loss'] = tot_loss / len(data_loader)
 
         dicts['action_acc'] = action_acc / num_agent
         dicts['consumption_acc'] = consumption_acc / num_agent
