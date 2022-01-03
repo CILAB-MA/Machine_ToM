@@ -24,6 +24,7 @@ class Storage(object):
             population = self.population[:slicing]
         else:
             population = self.population
+        print('Storage', slicing, len(population))
         for agent_index, agent in tqdm(enumerate(population), total=len(population)):
             self.env.prefer_reward = agent.reward
             self.env.preference = agent.most_prefer
