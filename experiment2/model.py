@@ -187,7 +187,8 @@ class PredNet(nn.Module):
         criterion_nll = nn.NLLLoss()
         criterion_bce = nn.BCELoss()
 
-        for batch in tqdm(data_loader, leave=False, total=len(data_loader)):
+        # for batch in tqdm(data_loader, leave=False, total=len(data_loader)):
+        for i, batch in enumerate(data_loader):
             past_traj, curr_state, target_action, target_consume, target_sr = batch
             past_traj = past_traj.float().cuda()
             curr_state = curr_state.float().cuda()
