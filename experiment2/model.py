@@ -239,11 +239,11 @@ class PredNet(nn.Module):
         for i, batch in enumerate(data_loader):
             with tr.no_grad():
                 past_traj, curr_state, target_action, target_consume, target_sr = batch
-                past_traj = tr.tensor(past_traj, dtype=tr.float, device=self.device)
-                curr_state = tr.tensor(curr_state, dtype=tr.float, device=self.device)
-                target_action = tr.tensor(target_action.squeeze(-1), dtype=tr.long, device=self.device)
-                target_consume_onehot = tr.tensor(target_consume, dtype=tr.float, device=self.device)
-                target_sr = tr.tensor(target_sr, dtype=tr.float, device=self.device)
+                past_traj = past_traj.to(self.device).float()
+                curr_state = curr_state.to(self.device).float()
+                target_action = target_action.squeeze(-1).to(self.device).long()
+                target_consume_onehot = target_consume.to(self.device).float()
+                target_sr = target_sr.to(self.device).float()
 
                 pred_action, pred_consumption, pred_sr, e_char = self.forward(past_traj, curr_state)
                 action_loss = criterion_nll(pred_action, target_action)
