@@ -5,13 +5,15 @@ import os
 class ToMDataset(Dataset):
 
     def __init__(self, episodes, curr_state, target_action, target_prefer=None,
-                 target_sr=None, exp='exp1'):
+                 target_sr=None, true_prefer=None, policy_value=None, exp='exp1'):
         self.episodes = episodes
         self.curr_state = curr_state
 
         self.target_action = target_action
         self.target_prefer = target_prefer
         self.target_sr = target_sr
+        self.true_prefer = true_prefer
+        self.policy_value = policy_value
 
         self.exp = exp
 
@@ -23,7 +25,7 @@ class ToMDataset(Dataset):
             return self.episodes[ind], self.curr_state[ind], self.target_action[ind]
         else:
             return self.episodes[ind], self.curr_state[ind], self.target_action[ind],\
-                   self.target_prefer[ind], self.target_sr[ind]
+                   self.target_prefer[ind], self.target_sr[ind], self.true_prefer[ind], self.policy_value[ind]
 
 
 def save_data(npy_data, is_train, base_dir, eval=None):
