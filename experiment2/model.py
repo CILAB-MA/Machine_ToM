@@ -57,7 +57,7 @@ class CharNet(nn.Module):
         self.lstm = nn.LSTM(32, 64)
         self.avgpool = nn.AvgPool2d(11)
         self.fc64_2 = nn.Linear(num_step * 64, 2)
-        self.fc64_8 = nn.Linear(64, 8)
+        self.fc64_8 = nn.Linear(num_step * 64, 8)
         self.fc32_2 = nn.Linear(32, 2)
         self.fc32_8 = nn.Linear(32, 8)
         self.hidden_size = 64
@@ -88,12 +88,12 @@ class CharNet(nn.Module):
             if self.num_exp == 2:
                 x = x.view(num_step, b, -1)
                 x = x.transpose(1, 0)
-                x = self.fc32_2(x)  ## batch, output
+                x = self.fc32_8(x)  ## batch, output
                 final_e_char = x
             else:
                 outs, hidden = self.lstm(x.view(num_step, b, -1), prev_h)
                 outs = outs.transpose(0, 1).reshape(b, -1) ## batch, step * output
-                e_char_sum = self.fc64_2(outs) ## batch, output
+                e_char_sum = self.fc64_8(outs) ## batch, output
                 past_e_char.append(e_char_sum)
 
         if self.num_exp == 1 or self.num_exp == 3:
@@ -109,7 +109,7 @@ class PredNet(nn.Module):
         super(PredNet, self).__init__()
 
         self.e_char = CharNet(num_past, num_input, num_exp=num_exp, num_step=num_step)
-        self.conv1 = ResNetBlock(8, 8, 1)
+        self.conv1 = ResNetBlock(14, 8, 1)
         self.conv2 = ResNetBlock(8, 16, 1)
         self.conv3 = ResNetBlock(16, 16, 1)
         self.conv4 = ResNetBlock(16, 32, 1)

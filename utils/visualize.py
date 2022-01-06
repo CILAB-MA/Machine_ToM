@@ -2,6 +2,8 @@ import matplotlib.pyplot as plt
 import os, copy
 import numpy as np
 import cv2
+from sklearn.manifold import TSNE
+
 
 def get_train_figure(measures, dicts, save_path, filename):
     plt.figure()
@@ -17,7 +19,7 @@ def get_train_figure(measures, dicts, save_path, filename):
 
     filepath = os.path.join(save_path, filename_str)
     plt.savefig(filepath)
-
+    plt.clf()
 
 def get_test_figure(measures, dicts, save_path, filename='test.jpg'):
     plt.figure()
@@ -32,7 +34,7 @@ def get_test_figure(measures, dicts, save_path, filename='test.jpg'):
     plt.legend(title='Test_Result', loc=1)
     filepath = os.path.join(save_path, filename_str)
     plt.savefig(filepath)
-
+    plt.clf()
 
 def visualize_embedding(e_char, labels, count, save_path, filename='e_char.jpg'):
     color_palette = np.array([[0, 0, 1], [1, 0, 0], [0, 1, 0], [1, 1, 0], [204/255, 0, 204/255]])
@@ -41,7 +43,7 @@ def visualize_embedding(e_char, labels, count, save_path, filename='e_char.jpg')
     plt.scatter(e_char[:, 0], e_char[:, 1], c=colors)
     filepath = os.path.join(save_path, filename)
     plt.savefig(filepath)
-
+    plt.clf()
 
 
 class Visualizer:
@@ -158,6 +160,7 @@ class Visualizer:
             os.makedirs(os.path.join(self.output_dir, str(sample_num), foldername))
 
         plt.savefig(output_file)
+        plt.clf()
 
     def get_prefer(self, consumed_preds, epoch, foldername='consumed', sample_num=0):
         plt.figure()
@@ -176,7 +179,7 @@ class Visualizer:
             os.makedirs(os.path.join(self.output_dir, str(sample_num), foldername))
 
         plt.savefig(output_file)
-
+        plt.clf()
 
     def get_sr(self, obs, sr_preds, epoch, foldername='sr', sample_num=0):
         palette = copy.deepcopy(self.palette)
@@ -222,6 +225,7 @@ class Visualizer:
         if not os.path.exists(os.path.join(self.output_dir, foldername)):
             os.makedirs(os.path.join(self.output_dir, foldername))
         plt.savefig(output_file)
+        plt.clf()
 
     def get_consume_char(self, e_char, preference, epoch, foldername='consume_e_char'):
         color_palette = ['blue', 'magenta', 'orange', 'limegreen']
@@ -240,3 +244,26 @@ class Visualizer:
         if not os.path.exists(os.path.join(self.output_dir, foldername)):
             os.makedirs(os.path.join(self.output_dir, foldername))
         plt.savefig(output_file)
+        plt.clf()
+
+
+    def tsen_consume_char(self, e_char, preference, epoch, foldername='consume_e_char_tsen'):
+        model = TSNE(2)
+        tsne_results = model.fit_transform(e_char)
+
+        color_palette = ['blue', 'magenta', 'orange', 'limegreen']
+        preference_index = np.argmax(preference, axis=-1)
+
+        colors = [color_palette[i] for i in preference_index]
+        plt.figure()
+        plt.scatter(tsne_results[:, 0], tsne_results[:, 1], c=colors)
+
+        tozero = len(str(self.max_epoch)) - len(str(epoch))
+
+        fn = tozero * '0' + str(epoch) + '.jpg'
+        output_file = os.path.join(self.output_dir, foldername, fn)
+
+        if not os.path.exists(os.path.join(self.output_dir, foldername)):
+            os.makedirs(os.path.join(self.output_dir, foldername))
+        plt.savefig(output_file)
+        plt.clf()
