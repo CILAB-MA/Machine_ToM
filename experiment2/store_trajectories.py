@@ -11,6 +11,7 @@ class Storage(object):
         self.current_state = np.zeros([len(population), env.height, env.width, 6])
         self.target_action = np.zeros([len(population), 1])
         self.target_preference = np.zeros([len(population), 4])
+        self.true_preference = np.zeros([len(population), 4])
         self.target_sr = np.zeros([len(population), env.height, env.width, 3])
         self.target_value = np.zeros([len(population), env.height, env.width, 1])
         self.dones = np.zeros([len(population), num_past, num_step, 1])
@@ -28,6 +29,7 @@ class Storage(object):
         for agent_index, agent in tqdm(enumerate(population), total=len(population)):
             self.env.prefer_reward = agent.reward
             self.env.preference = agent.most_prefer
+            self.true_preference[agent_index] = agent.reward
             for past_epi in range(self.num_past):
                 self.env.num_wall = np.random.randint(5)
                 if np.sum(custom_past) > 0:
@@ -90,7 +92,7 @@ class Storage(object):
         #))
         return dict(episodes=self.past_trajectories[:len(population)], curr_state=self.current_state[:len(population)],
                     target_action=self.target_action[:len(population)], target_prefer=self.target_preference[:len(population)],
-                    target_sr=self.target_sr[:len(population)])
+                    target_sr=self.target_sr[:len(population)], true_prefer=self.true_preference[:len(population)])
 
     def reset(self):
         self.past_trajectories = np.zeros(self.past_trajectories.shape)
