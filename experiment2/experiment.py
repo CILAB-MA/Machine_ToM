@@ -68,6 +68,7 @@ def evaluate(tom_net, eval_loader, visualizer=None, is_visualize=False,
 
 
         visualizer.get_consume_char(ev_results['e_char'], preference, filename)
+        visualizer.tsen_consume_char(ev_results['e_char'], preference, filename)
     return ev_results
 
 
@@ -102,14 +103,12 @@ def run_experiment(num_epoch, main_experiment, sub_experiment, num_agent, batch_
                             max_epoch=num_epoch, height=env.height, width=env.width)
     # Train
     optimizer = optim.Adam(tom_net.parameters(), lr=lr)
-    train(tom_net, optimizer, train_loader, eval_loader, experiment_folder,
-          summary_writer, visualizer, dicts)
+    train(tom_net, optimizer, train_loader, eval_loader, experiment_folder, summary_writer, visualizer, dicts)
 
     # Visualize Train
     train_fixed_loader = DataLoader(train_dataset, batch_size=1000, shuffle=False)
     train_prefer = train_storage.target_preference
-    tr_results = evaluate(tom_net, train_fixed_loader, visualizer, is_visualize=True,
-                          preference=train_prefer)
+    tr_results = evaluate(tom_net, train_fixed_loader, visualizer, is_visualize=True, preference=train_prefer)
     # Test
     eval_storage.reset()
     test_data = eval_storage.extract()
@@ -117,5 +116,4 @@ def run_experiment(num_epoch, main_experiment, sub_experiment, num_agent, batch_
     test_dataset = dataset.ToMDataset(**test_data)
     test_loader = DataLoader(test_dataset, batch_size=1000, shuffle=False)
     preference = eval_storage.target_preference
-    ev_results = evaluate(tom_net, test_loader, visualizer, is_visualize=True,
-                         preference=preference, mode='eval')
+    ev_results = evaluate(tom_net, test_loader, visualizer, is_visualize=True, preference=preference, mode='eval')
