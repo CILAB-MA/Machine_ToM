@@ -247,7 +247,7 @@ class Visualizer:
         plt.clf()
 
 
-    def tsen_consume_char(self, e_char, preference, epoch, foldername='consume_e_char_tsen'):
+    def tsne_consume_char(self, e_char, preference, epoch, foldername='consume_e_char_tsen'):
         model = TSNE(2)
         tsne_results = model.fit_transform(e_char)
 

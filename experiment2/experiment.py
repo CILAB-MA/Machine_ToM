@@ -68,7 +68,7 @@ def evaluate(tom_net, eval_loader, visualizer=None, is_visualize=False,
 
 
         visualizer.get_consume_char(ev_results['e_char'], preference, filename)
-        visualizer.tsen_consume_char(ev_results['e_char'], preference, filename)
+        visualizer.tsne_consume_char(ev_results['e_char'], preference, filename)
     return ev_results
 
 
