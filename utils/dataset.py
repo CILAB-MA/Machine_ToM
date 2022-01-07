@@ -5,7 +5,7 @@ import os
 class ToMDataset(Dataset):
 
     def __init__(self, episodes, curr_state, target_action, target_prefer=None,
-                 target_sr=None, exp='exp1'):
+                 target_sr=None, target_value=None, exp='exp1'):
         self.episodes = episodes
         self.curr_state = curr_state
 
