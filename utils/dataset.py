@@ -23,7 +23,7 @@ class ToMDataset(Dataset):
             return self.episodes[ind], self.curr_state[ind], self.target_action[ind]
         else:
             return self.episodes[ind], self.curr_state[ind], self.target_action[ind],\
-                   self.target_prefer[ind], self.target_sr[ind]
+                   self.target_prefer[ind], self.target_sr[ind], ind
 
 
 def save_data(npy_data, is_train, base_dir, eval=None):

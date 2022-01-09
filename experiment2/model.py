@@ -189,7 +189,7 @@ class PredNet(nn.Module):
 
         # for batch in tqdm(data_loader, leave=False, total=len(data_loader)):
         for i, batch in enumerate(data_loader):
-            past_traj, curr_state, target_action, target_consume, target_sr = batch
+            past_traj, curr_state, target_action, target_consume, target_sr, _ = batch
             past_traj = past_traj.float().cuda()
             curr_state = curr_state.float().cuda()
             target_action = target_action.long().cuda().squeeze(-1)
@@ -238,7 +238,7 @@ class PredNet(nn.Module):
 
         for i, batch in enumerate(data_loader):
             with tr.no_grad():
-                past_traj, curr_state, target_action, target_consume, target_sr = batch
+                past_traj, curr_state, target_action, target_consume, target_sr, _ = batch
                 past_traj = past_traj.to(self.device).float()
                 curr_state = curr_state.to(self.device).float()
                 target_action = target_action.squeeze(-1).to(self.device).long()
