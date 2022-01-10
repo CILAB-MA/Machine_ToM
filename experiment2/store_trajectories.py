@@ -62,6 +62,7 @@ class Storage(object):
                     curr_obs = self.env.reset(custom=custom_query[agent_index], wall=True)
                 else:
                     curr_obs = self.env.reset(wall=True)
+                agent_query_loc = copy.deepcopy(curr_obs[:, :, 5])
                 #self.env.obs_well_show()
                 agent.train(curr_obs)
                 target_action = agent.act(curr_obs)
@@ -81,6 +82,7 @@ class Storage(object):
             sr[:, :, 0] /= np.sum(sr[:, :, 0])
             sr[:, :, 1] /= np.sum(sr[:, :, 1])
             sr[:, :, 2] /= np.sum(sr[:, :, 2])
+            curr_obs[:, :, 5] = agent_query_loc
             self.current_state[agent_index] = curr_obs
             self.target_action[agent_index] = target_action
             if consumed != None:
