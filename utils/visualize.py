@@ -247,16 +247,17 @@ class Visualizer:
         plt.clf()
 
 
-    def tsne_consume_char(self, e_char, preference, epoch, foldername='consume_e_char_tsen'):
+    def tsne_consume_char(self, e_char, preference, epoch, foldername='consume_e_char_tsne'):
         model = TSNE(2)
         tsne_results = model.fit_transform(e_char)
 
         color_palette = ['blue', 'magenta', 'orange', 'limegreen']
         preference_index = np.argmax(preference, axis=-1)
 
+        al = np.max(preference, axis=-1)
         colors = [color_palette[i] for i in preference_index]
         plt.figure()
-        plt.scatter(tsne_results[:, 0], tsne_results[:, 1], c=colors)
+        plt.scatter(tsne_results[:, 0], tsne_results[:, 1], s=5, alpha=al, c=colors)
 
         tozero = len(str(self.max_epoch)) - len(str(epoch))
 
