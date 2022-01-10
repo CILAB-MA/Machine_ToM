@@ -43,4 +43,5 @@ def make_pool(agent_type, move_penalty, alpha, num_agent):
     else:
         assert ('Your alpha type is not proper type. We expect list, int or float. '
                 'But we get the {}. Also check num_agent'.format(type(alpha)))
+    np.random.shuffle(population)
     return population
