@@ -198,7 +198,11 @@ class PredNet(nn.Module):
 
             pred_action, pred_consumption, pred_sr, e_char_2d = self.forward(past_traj, curr_state)
             action_loss = criterion_nll(pred_action, target_action)
-            consumption_loss = criterion_bce(pred_consumption, target_consume_onehot)
+            con_loss1 = criterion_bce(pred_consumption[:, 0], target_consume_onehot[:, 0])
+            con_loss2 = criterion_bce(pred_consumption[:, 1], target_consume_onehot[:, 1])
+            con_loss3 = criterion_bce(pred_consumption[:, 2], target_consume_onehot[:, 2])
+            con_loss4 = criterion_bce(pred_consumption[:, 3], target_consume_onehot[:, 3])
+            consumption_loss = con_loss1 + con_loss2 + con_loss3 + con_loss4
             sr_loss = cross_entropy_with_soft_label(pred_sr, target_sr.flatten(1, 2))
 
             optim.zero_grad()
