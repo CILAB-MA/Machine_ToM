@@ -9,7 +9,7 @@ class Storage(object):
         self.past_trajectories = np.zeros([len(population), num_past, num_step, env.height, env.width, 11])
         self.current_state = np.zeros([len(population), env.height, env.width, 6])
         self.target_action = np.zeros([len(population), 1])
-        self.target_preference = np.zeros([len(population), 4])
+        self.target_preference = np.full([len(population), 1], 4)
         self.true_preference = np.zeros([len(population), 4])
         self.target_sr = np.zeros([len(population), env.height, env.width, 3])
         self.target_value = np.zeros([len(population), num_past, env.height, env.width])
@@ -83,7 +83,7 @@ class Storage(object):
             self.current_state[agent_index] = curr_obs
             self.target_action[agent_index] = target_action
             if consumed != None:
-                self.target_preference[agent_index, consumed] = 1
+                self.target_preference[agent_index] = consumed
             self.target_sr[agent_index] = sr
         #print('Past Traj : {} Curr state : {} Targ action : {} Targ goal : {} Targ SR : {} Targ Done : {}'.format(
         #    self.past_trajectories.shape, self.current_state.shape, self.target_action.shape, self.target_preference.shape,
