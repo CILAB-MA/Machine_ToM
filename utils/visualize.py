@@ -190,14 +190,14 @@ class Visualizer:
             if i != 6:
                 xy_object = np.where(obs[:, :, i] == 1)
             else:
-                xy_object = np.where(sr_preds[: , :, -1] != 0)
+                xy_object = np.where(sr_preds[: , :, 0] != 0)
 
             xs, ys = xy_object
             for x, y in zip(xs, ys):
                 if i == 6:
                     palette = copy.deepcopy(self.palette)
-                    palette[i][0] -= 255 * sr_preds[x, y, -1]
-                    palette[i][1] -= 255 * sr_preds[x, y, -1]
+                    palette[i][0] -= 255 * sr_preds[x, y, 1]
+                    palette[i][1] -= 255 * sr_preds[x, y, 1]
                 vis_obs[x * self.grid_per_pixel: (x + 1) * self.grid_per_pixel,
                 y * self.grid_per_pixel : (y + 1) * self.grid_per_pixel, :] = palette[i]
 
