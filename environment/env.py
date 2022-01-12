@@ -50,7 +50,8 @@ class GridWorldEnv:
         if np.sum(custom) > 0:
             self.observation = copy.deepcopy(custom)
             self.agent_xy = [np.where(self.observation[:, :, 5] == 1)[0], np.where(self.observation[:, :, 5] == 1)[1]]
-            return self.observation
+            observation = copy.deepcopy(self.observation)
+            return observation
 
         self.observation = np.full(self.observation_space, 0)
         # Make Base Wall

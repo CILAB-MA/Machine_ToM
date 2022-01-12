@@ -136,8 +136,8 @@ class PredNet(nn.Module):
             nn.ReLU(inplace=True),
             nn.AvgPool2d(11),
             nn.Flatten(),
-            nn.Linear(32,4),
-            nn.Sigmoid()
+            nn.Linear(32, 5),
+            nn.LogSoftmax()
         )
 
         self.representation_head = nn.Sequential(
@@ -193,12 +193,12 @@ class PredNet(nn.Module):
             past_traj = past_traj.float().cuda()
             curr_state = curr_state.float().cuda()
             target_action = target_action.long().cuda().squeeze(-1)
-            target_consume_onehot = target_consume.float().cuda()
+            target_consume = target_consume.long().cuda().squeeze(-1)
             target_sr = target_sr.float().cuda()
 
             pred_action, pred_consumption, pred_sr, e_char_2d = self.forward(past_traj, curr_state)
             action_loss = criterion_nll(pred_action, target_action)
-            consumption_loss = criterion_bce(pred_consumption, target_consume_onehot)
+            consumption_loss = criterion_nll(pred_consumption, target_consume)
             sr_loss = cross_entropy_with_soft_label(pred_sr, target_sr.flatten(1, 2))
 
             optim.zero_grad()
@@ -208,7 +208,6 @@ class PredNet(nn.Module):
 
             pred_action_ind = tr.argmax(pred_action, dim=-1)
             pred_consumption_ind = tr.argmax(pred_consumption, dim=-1)
-            targ_consumption_ind = tr.argmax(target_consume_onehot, dim=-1)
 
             a_loss += action_loss.item()
             c_loss += consumption_loss.item()
@@ -216,7 +215,7 @@ class PredNet(nn.Module):
             tot_loss += loss.item()
 
             action_acc += tr.sum(pred_action_ind == target_action).item()
-            consumption_acc += tr.sum(pred_consumption_ind == targ_consumption_ind).item()
+            consumption_acc += tr.sum(pred_consumption_ind == target_consume).item()
 
         dicts = dict(action_acc=action_acc / self.num_agent,
                      consumption_acc=consumption_acc / self.num_agent,
@@ -242,12 +241,12 @@ class PredNet(nn.Module):
                 past_traj = past_traj.to(self.device).float()
                 curr_state = curr_state.to(self.device).float()
                 target_action = target_action.squeeze(-1).to(self.device).long()
-                target_consume_onehot = target_consume.to(self.device).float()
+                target_consume = target_consume.long().cuda().squeeze(-1)
                 target_sr = target_sr.to(self.device).float()
 
                 pred_action, pred_consumption, pred_sr, e_char = self.forward(past_traj, curr_state)
                 action_loss = criterion_nll(pred_action, target_action)
-                consumption_loss = criterion_bce(pred_consumption, target_consume_onehot)
+                consumption_loss = criterion_nll(pred_consumption, target_consume)
                 sr_loss = cross_entropy_with_soft_label(pred_sr, target_sr.flatten(1, 2))
 
             loss = action_loss + consumption_loss + sr_loss
@@ -259,10 +258,9 @@ class PredNet(nn.Module):
 
             pred_action_ind = tr.argmax(pred_action, dim=-1)
             pred_consumption_ind = tr.argmax(pred_consumption, dim=-1)
-            targ_consumption_ind = tr.argmax(target_consume_onehot, dim=-1)
 
             action_acc += tr.sum(pred_action_ind == target_action).item()
-            consumption_acc += tr.sum(pred_consumption_ind == targ_consumption_ind).item()
+            consumption_acc += tr.sum(pred_consumption_ind == target_consume).item()
 
         dicts = dict()
         targets = dict()
@@ -281,7 +279,7 @@ class PredNet(nn.Module):
             dicts['pred_sr'] = pred_sr[:ind].reshape(-1, 11, 11, 3).cpu().numpy()
             dicts['e_char'] = e_char[:1000].cpu().numpy()
             targets['targ_actions'] = target_action_onehot.cpu().numpy()
-            targets['targ_consumption'] = target_consume_onehot[:ind].cpu().numpy()
+            targets['targ_consumption'] = target_consume[:ind].cpu().numpy()
             targets['targ_sr'] = target_sr[:ind].cpu().numpy()
 
         dicts['action_loss'] = a_loss / len(data_loader)

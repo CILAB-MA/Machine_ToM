@@ -164,10 +164,10 @@ class Visualizer:
 
     def get_prefer(self, consumed_preds, epoch, foldername='consumed', sample_num=0):
         plt.figure()
-        plt.ylabel('Binary Prob')
-        x = np.arange(4)
-        plt.bar(x, consumed_preds, color=['b', 'magenta', 'orange', 'g'])
-        plt.xticks(x, ['Blue', 'Pink', 'Orange', 'Green'])
+        plt.ylabel('Prob')
+        x = np.arange(5)
+        plt.bar(x, np.exp(consumed_preds), color=['b', 'magenta', 'orange', 'g', 'black'])
+        plt.xticks(x, ['Blue', 'Pink', 'Orange', 'Green', 'None'])
 
         tozero = len(str(self.max_epoch)) - len(str(epoch))
 
@@ -228,7 +228,7 @@ class Visualizer:
         plt.clf()
 
     def get_consume_char(self, e_char, preference, epoch, foldername='consume_e_char'):
-        color_palette = ['blue', 'magenta', 'orange', 'limegreen']
+        color_palette = ['blue', 'magenta', 'orange', 'limegreen', 'black']
         preference_index = np.argmax(preference, axis=-1)
 
         colors = [color_palette[i] for i in preference_index]
