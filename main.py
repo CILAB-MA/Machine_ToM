@@ -16,6 +16,8 @@ def parse_args():
     parser.add_argument('--lr', '-l', type=float, default=1e-4)
     parser.add_argument('--alpha', '-a', type=float, default=0.01)
     parser.add_argument('--save_freq', '-s', type=int, default=10)
+    parser.add_argument('--train_dir', default='none', type=str)
+    parser.add_argument('--eval_dir', default='none', type=str)
     args = parser.parse_args()
     return args
 
@@ -26,7 +28,8 @@ def main(args):
                                               sub_experiment=args.sub_exp, num_agent=args.num_agent,
                                               batch_size=args.batch_size, lr=args.lr,
                                               experiment_folder=experiment_folder,
-                                              alpha=args.alpha, save_freq=args.save_freq)
+                                              alpha=args.alpha, save_freq=args.save_freq,
+                                              train_dir=args.train_dir, eval_dir=args.eval_dir)
 
 
 if __name__ == '__main__':
