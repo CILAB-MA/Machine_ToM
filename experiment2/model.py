@@ -6,6 +6,20 @@ from tqdm import tqdm
 def cross_entropy_with_soft_label(pred, targ):
     return -(targ * pred.log()).sum(dim=-1).mean()
 
+class ConvBlock(nn.Module):
+    def __init__(self, in_channels, out_channels, stride=1):
+        super().__init__()
+
+        self.conv_function = nn.Sequential(
+            nn.Conv2d(in_channels, out_channels, kernel_size=3, stride=stride, padding=1, bias=False),
+            nn.BatchNorm2d(out_channels),
+            nn.ReLU()
+        )
+
+    def forward(self, x):
+        x = self.conv_function(x)
+        return x
+
 class ResNetBlock(nn.Module):
     expansion = 1
     def __init__(self, in_channels, out_channels, stride=1):
@@ -114,6 +128,11 @@ class PredNet(nn.Module):
         self.conv3 = ResNetBlock(16, 16, 1)
         self.conv4 = ResNetBlock(16, 32, 1)
         self.conv5 = ResNetBlock(32, 32, 1)
+        self.normal_conv1 = ConvBlock(14, 8, 1)
+        self.normal_conv2 = ConvBlock(8, 16, 1)
+        self.normal_conv3 = ConvBlock(16, 16, 1)
+        self.normal_conv4 = ConvBlock(16, 32, 1)
+        self.normal_conv5 = ConvBlock(32, 32, 1)
         self.avgpool = nn.AvgPool2d(11)
         self.bn = nn.BatchNorm2d(32)
         self.relu = nn.ReLU(inplace=True)
