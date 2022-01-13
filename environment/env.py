@@ -65,11 +65,11 @@ class GridWorldEnv:
         if wall:
             for _ in range(self.num_wall):
                 direction = np.random.choice([0, 1] , 1)[0]
-                st = np.random.randint(11, size=2)
+                st = np.random.randint(self.observation_space[0], size=2)
                 if st[direction] == 10:
                     length = 1
                 else:
-                    length = np.random.randint(low=1, high=11-st[direction])
+                    length = np.random.randint(low=1, high=self.observation_space[0]-st[direction])
                 if direction == 0:
                     self.observation[st[0]:st[0]+length, st[1], 0] = 1
                 else:
@@ -166,7 +166,7 @@ class GridWorldEnv:
 
 
 if __name__ == '__main__':
-    config = dict(height=11, width=11, pixel_per_grid=8, num_wall=1, preference=1, prefer_reward=[0, 0, 0, 1], exp=4, save=True)
+    config = dict(height=25, width=25, pixel_per_grid=8, num_wall=1, preference=1, prefer_reward=[0, 0, 0, 1], exp=4, save=True)
     env = GridWorldEnv(config)
     env.prefer_reward = [0, 1, 0, 0]
     env.most_prefer = 1
@@ -191,7 +191,7 @@ if __name__ == '__main__':
             break
 
     # check wall collision
-    map = np.full((11, 11, 6), 0)
+    map = np.full((25, 25, 6), 0)
     map[0, :, 0] = 1
     map[:, 0, 0] = 1
     map[-1, :, 0] = 1
