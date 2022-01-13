@@ -90,10 +90,10 @@ def run_experiment(num_epoch, main_experiment, sub_experiment, num_agent, batch_
         eval_dataset_1 = make_dataset(eval_dirs[0])
         eval_dataset_2 = make_dataset(eval_dirs[1])
         eval_dataset_3 = make_dataset(eval_dirs[2])
-        eval_loader_0 = DataLoader(eval_dataset_0, batch_size=batch_size, shuffle=False)
-        eval_loader_1 = DataLoader(eval_dataset_1, batch_size=batch_size, shuffle=False)
-        eval_loader_2 = DataLoader(eval_dataset_2, batch_size=batch_size, shuffle=False)
-        eval_loader_3 = DataLoader(eval_dataset_3, batch_size=batch_size, shuffle=False)
+        eval_loader_0 = DataLoader(eval_dataset_0, batch_size=num_agent, shuffle=False)
+        eval_loader_1 = DataLoader(eval_dataset_1, batch_size=num_agent, shuffle=False)
+        eval_loader_2 = DataLoader(eval_dataset_2, batch_size=num_agent, shuffle=False)
+        eval_loader_3 = DataLoader(eval_dataset_3, batch_size=num_agent, shuffle=False)
         eval_loaders = [eval_loader_0, eval_loader_1, eval_loader_2, eval_loader_3]
 
         train_prefer = np.load(train_dir + "/true_prefer.npy")
@@ -117,7 +117,7 @@ def run_experiment(num_epoch, main_experiment, sub_experiment, num_agent, batch_
         train_dataset = dataset.ToMDataset(**train_data)
         eval_dataset = dataset.ToMDataset(**eval_data)
         train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
-        eval_loader = DataLoader(eval_dataset, batch_size=batch_size, shuffle=False) #len(eval_dataset)
+        eval_loader = DataLoader(eval_dataset, batch_size=num_agent, shuffle=False) #len(eval_dataset)
         eval_loaders = [eval_loader]
         train_prefer = train_storage.true_preference
 
