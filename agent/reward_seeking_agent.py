@@ -82,7 +82,7 @@ class RewardSeekingAgent():
     def _one_step_lookahead(self, xi, yi, P):
         A = np.zeros(self.num_action)
         for a in range(self.num_action):
-            for prob, next_state, reward, done in P[xi * self.obs_width + yi][a]:  # reward, done은 안 바뀌고 현재에 대한 것
+            for prob, next_state, reward, done in P[xi * self.obs_width + yi][a]:
                 next_x, next_y = next_state
                 if done:
                     A[a] += prob * reward
