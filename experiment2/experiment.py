@@ -106,10 +106,12 @@ def run_experiment(num_epoch, main_experiment, sub_experiment, num_agent, batch_
         train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
 
     else:
+        if num_agent > 1000:
+            num_agent = 1000
         population = utils.make_pool(agent_type, exp_kwargs['move_penalty'], alpha, num_agent)
         # Make the Dataset
         train_storage = Storage(env, population, exp_kwargs['num_past'], exp_kwargs['num_step'])
-        eval_storage = Storage(env, population[:1000], exp_kwargs['num_past'], exp_kwargs['num_step'])
+        eval_storage = Storage(env, population[:num_agent], exp_kwargs['num_past'], exp_kwargs['num_step'])
         train_data = train_storage.extract()
         train_data['exp'] = 'exp2'
         eval_data = eval_storage.extract()
@@ -128,7 +130,7 @@ def run_experiment(num_epoch, main_experiment, sub_experiment, num_agent, batch_
     train(tom_net, optimizer, train_loader, eval_loaders, experiment_folder, summary_writer, visualizer, dicts)
 
     # Visualize Train
-    train_fixed_loader = DataLoader(train_dataset, batch_size=1000, shuffle=False)
+    train_fixed_loader = DataLoader(train_dataset, batch_size=num_agent, shuffle=False)
     train_prefer = train_storage.true_preference
     tr_results = evaluate(tom_net, train_fixed_loader, visualizer, is_visualize=True, preference=train_prefer)
     # Test
@@ -136,7 +138,7 @@ def run_experiment(num_epoch, main_experiment, sub_experiment, num_agent, batch_
     test_data = eval_storage.extract()
     test_data['exp'] = 'exp2'
     test_dataset = dataset.ToMDataset(**test_data)
-    test_loader = DataLoader(test_dataset, batch_size=1000, shuffle=False)
+    test_loader = DataLoader(test_dataset, batch_size=num_agent, shuffle=False)
     preference = eval_storage.true_preference
     ev_results = evaluate(tom_net, test_loader, visualizer, is_visualize=True, preference=preference, mode='eval')
 
