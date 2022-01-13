@@ -69,7 +69,7 @@ class CharNet(nn.Module):
         self.bn = nn.BatchNorm2d(32)
         self.relu = nn.ReLU(inplace=True)
         self.lstm = nn.LSTM(32, 64)
-        self.avgpool = nn.AvgPool2d(11)
+        self.avgpool = nn.AvgPool2d(25) ##here
         self.fc64_2 = nn.Linear(num_step * 64, 2)
         self.fc64_8 = nn.Linear(num_step * 64, 8)
         self.fc32_2 = nn.Linear(32, 2)
@@ -134,7 +134,7 @@ class PredNet(nn.Module):
         self.normal_conv3 = ConvBlock(16, 16, 1)
         self.normal_conv4 = ConvBlock(16, 32, 1)
         self.normal_conv5 = ConvBlock(32, 32, 1)
-        self.avgpool = nn.AvgPool2d(11)
+        self.avgpool = nn.AvgPool2d(25)  ## here
         self.bn = nn.BatchNorm2d(32)
         self.relu = nn.ReLU(inplace=True)
         self.action_fc = nn.Linear(32, 5)
@@ -145,7 +145,7 @@ class PredNet(nn.Module):
         self.action_head = nn.Sequential(
             nn.Conv2d(32, 32, 1, 1),
             nn.ReLU(inplace=True),
-            nn.AvgPool2d(11),
+            nn.AvgPool2d(25), #here
             nn.Flatten(),
             nn.Linear(32,5),
             nn.LogSoftmax()
@@ -154,7 +154,7 @@ class PredNet(nn.Module):
         self.consumption_head = nn.Sequential(
             nn.Conv2d(32, 32, 1, 1),
             nn.ReLU(inplace=True),
-            nn.AvgPool2d(11),
+            nn.AvgPool2d(25), #here
             nn.Flatten(),
             nn.Linear(32, 5),
             nn.LogSoftmax()
@@ -297,7 +297,7 @@ class PredNet(nn.Module):
             dicts['curr_state'] = curr_state[:ind].cpu().numpy()
             dicts['pred_actions'] = pred_action[:ind].cpu().numpy()
             dicts['pred_consumption'] = pred_consumption[:ind].cpu().numpy()
-            dicts['pred_sr'] = pred_sr[:ind].reshape(-1, 11, 11, 3).cpu().numpy()
+            dicts['pred_sr'] = pred_sr[:ind].reshape(-1, target_sr.shape[1], target_sr.shape[2], 3).cpu().numpy()
             dicts['e_char'] = e_char[:1000].cpu().numpy()
             targets['targ_actions'] = target_action_onehot.cpu().numpy()
             targets['targ_consumption'] = target_consume_onehot.cpu().numpy()
