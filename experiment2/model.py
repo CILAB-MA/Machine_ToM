@@ -291,6 +291,7 @@ class PredNet(nn.Module):
                 ind = 16
             diag = tr.eye(5)
             target_action_onehot = diag[target_action[:ind]]
+            target_consume_onehot = diag[target_consume[:ind]]
             dicts['past_traj'] = past_traj[:ind].cpu().numpy()
             dicts['curr_state'] = curr_state[:ind].cpu().numpy()
             dicts['pred_actions'] = pred_action[:ind].cpu().numpy()
@@ -298,7 +299,7 @@ class PredNet(nn.Module):
             dicts['pred_sr'] = pred_sr[:ind].reshape(-1, 11, 11, 3).cpu().numpy()
             dicts['e_char'] = e_char[:1000].cpu().numpy()
             targets['targ_actions'] = target_action_onehot.cpu().numpy()
-            targets['targ_consumption'] = target_consume[:ind].cpu().numpy()
+            targets['targ_consumption'] = target_consume_onehot.cpu().numpy()
             targets['targ_sr'] = target_sr[:ind].cpu().numpy()
 
         dicts['action_loss'] = a_loss / len(data_loader)

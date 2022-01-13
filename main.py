@@ -9,10 +9,10 @@ EXPERIMENTS = [experiment1, experiment2] # experiment 3 will be update
 def parse_args():
     parser = argparse.ArgumentParser('For ToM Passive Exp')
     parser.add_argument('--num_epoch', '-e', type=int, default=100)
-    parser.add_argument('--main_exp', '-me', type=int, default=1)
+    parser.add_argument('--main_exp', '-me', type=int, default=2)
     parser.add_argument('--sub_exp', '-se', type=int, default=1)
     parser.add_argument('--num_agent', '-na', type=int, default=1000)
-    parser.add_argument('--batch_size', '-b', type=int, default=16)
+    parser.add_argument('--batch_size', '-b', type=int, default=32)
     parser.add_argument('--lr', '-l', type=float, default=1e-4)
     parser.add_argument('--alpha', '-a', type=float, default=0.01)
     parser.add_argument('--save_freq', '-s', type=int, default=10)

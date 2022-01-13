@@ -65,7 +65,7 @@ class Storage(object):
                 agent.train(curr_obs)
                 target_action = agent.act(curr_obs)
                 action = copy.deepcopy(target_action)
-                sr = np.zeros((11, 11, 3))
+                sr = np.zeros((self.env.height, self.env.width, 3))
                 sr[self.env.agent_xy[0], self.env.agent_xy[1], :] = 1
                 gamma = np.array([0.5, 0.9, 0.99])
                 for s in range(self.env.epi_max_step):
@@ -120,7 +120,7 @@ class Storage(object):
 if __name__ == '__main__':
     from environment.env import GridWorldEnv
     import agent
-    env_config = dict(height=11, width=11, pixel_per_grid=8, preference=100, exp=2, save=True)
+    env_config = dict(height=25, width=25, pixel_per_grid=8, preference=100, exp=2, save=True)
     env = GridWorldEnv(env_config)
     agent_config = dict(name='reward_seeking', species=[0.01], num=1000)
     agent = agent.agent_type[agent_config['name']]
