@@ -69,7 +69,7 @@ class GridWorldEnv:
                 if st[direction] == 10:
                     length = 1
                 else:
-                    length = np.random.randint(low=1, high=self.observation_space[0]-st[direction])
+                    length = np.random.randint(low=1, high=self.observation_space[0]-st[direction]+1)
                 if direction == 0:
                     self.observation[st[0]:st[0]+length, st[1], 0] = 1
                 else:
