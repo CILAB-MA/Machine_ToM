@@ -6,10 +6,8 @@ from environment.env import GridWorldEnv
 # class RewardSeekingAgent(BaseAgent):
 class RewardSeekingAgent():
     '''
-    0: Blue
-    1: Pink
-    2: Orange
-    3: Green
+    objects : ['Blue', 'Pink', 'Orange', 'Green']
+    action : ['Stay', 'Down', 'Right', 'Up', 'Left']
     '''
 
     def __init__(self, alpha, num_action=5, move_penalty=-0.01):
@@ -21,7 +19,6 @@ class RewardSeekingAgent():
         self.theta = 0.0001
         self.move_penalty = move_penalty
         self.most_prefer = np.argmax(self.reward)
-        self.policy = np.zeros([11, 11, 5])
 
     def act(self, observation):
         agent_channel = observation[:, :, -1]
@@ -37,24 +34,28 @@ class RewardSeekingAgent():
         return action
 
     def train(self, observation):
+        self.obs_height = observation.shape[0]
+        self.obs_width = observation.shape[1]
+
         P = {}
-        grid = np.arange(11*11).reshape([11, 11])
+        grid = np.arange(self.obs_height * self.obs_width).reshape([self.obs_height, self.obs_width])
         it = np.nditer(grid, flags=['multi_index'])
         trial = 0
+
         while not it.finished:
-            s = it.iterindex
+            state = it.iterindex
             x, y = it.multi_index
 
             # P[x][y][a] = (prob, next_state, reward, done)
-            P[s] = {a: [] for a in range(self.num_action)}
+            P[state] = {a: [] for a in range(self.num_action)}
 
             done, reward = self._done_reward(observation, x, y)
 
-            P[s][0] = [(1.0, [x, y], reward, done)]
-            P[s][1] = [(1.0, [x+1, y], reward, done)]
-            P[s][2] = [(1.0, [x, y+1], reward, done)]
-            P[s][3] = [(1.0, [x-1, y], reward, done)]
-            P[s][4] = [(1.0, [x, y-1], reward, done)]
+            P[state][0] = [(1.0, [x, y], reward, done)]
+            P[state][1] = [(1.0, [x+1, y], reward, done)]
+            P[state][2] = [(1.0, [x, y+1], reward, done)]
+            P[state][3] = [(1.0, [x-1, y], reward, done)]
+            P[state][4] = [(1.0, [x, y-1], reward, done)]
 
             it.iternext()
             trial += 1
@@ -69,17 +70,19 @@ class RewardSeekingAgent():
             done = True
             reward += -0.05
         # consuming objects
-        for i in [1, 2, 3, 4]:
-            if observation[xi, yi, i] == 1:
-                done = True
-                reward += self.reward[i-1]
+        else:
+            for object_idx in [1, 2, 3, 4]:
+                if observation[xi, yi, object_idx] == 1:
+                    done = True
+                    reward += self.reward[object_idx - 1]
+                    break
 
         return done, reward
 
     def _one_step_lookahead(self, xi, yi, P):
         A = np.zeros(self.num_action)
         for a in range(self.num_action):
-            for prob, next_state, reward, done in P[xi * 11 + yi][a]:
+            for prob, next_state, reward, done in P[xi * self.obs_width + yi][a]:
                 next_x, next_y = next_state
                 if done:
                     A[a] += prob * reward
@@ -89,11 +92,11 @@ class RewardSeekingAgent():
         return A
 
     def _value_iteration(self, P):
-        self.V = np.zeros([11, 11])
+        self.V = np.zeros([self.obs_height, self.obs_width])
         while True:
             delta = 0
-            for xi in range(11):
-                for yi in range(11):
+            for xi in range(self.obs_height):
+                for yi in range(self.obs_width):
                     A = self._one_step_lookahead(xi, yi, P)
                     best_action_value = np.max(A)
                     delta = max(delta, np.abs(best_action_value - self.V[xi][yi]))
@@ -101,9 +104,9 @@ class RewardSeekingAgent():
             if delta < self.theta:
                 break
 
-        self.policy = np.zeros([11, 11, 5])
-        for xi in range(11):
-            for yi in range(11):
+        self.policy = np.zeros([self.obs_height, self.obs_width, 5])
+        for xi in range(self.obs_height):
+            for yi in range(self.obs_width):
                 A = self._one_step_lookahead(xi, yi, P)
                 best_action = np.argmax(A)
                 self.policy[xi, yi, best_action] = 1.0
