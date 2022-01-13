@@ -15,7 +15,7 @@ import torch as tr
 import numpy as np
 import glob
 
-def train(tom_net, optimizer, train_loader, eval_loaders, experiment_folder, writer, visualizer, dicts):
+def train(tom_net, optimizer, train_loader, eval_loaders, experiment_folder, writer, visualizer, num_agent, dicts):
     for epoch in range(dicts['num_epoch']):
         results = tom_net.train(train_loader, optimizer)
 
@@ -26,13 +26,13 @@ def train(tom_net, optimizer, train_loader, eval_loaders, experiment_folder, wri
         print(train_msg)
         writer.write(results, epoch, is_train=True)
         for e, eval_loader in enumerate(eval_loaders):
-            ev_results = evaluate(tom_net, eval_loader)
+            ev_results = evaluate(tom_net, eval_loader, num_agent=num_agent)
             eval_msg = 'Eval{}| Epoch {} Loss |Total {:.4f} Consume {:.4f} Action {:.4f} SR {:.4f}| Acc |Action {:.4f} Consume {:.4f}|'.format(
                 e, epoch, ev_results['total_loss'], ev_results['consumption_loss'], ev_results['action_loss'],
                 ev_results['sr_loss'], ev_results['action_acc'], ev_results['consumption_acc'])
 
             print(eval_msg)
-            writer.write(ev_results, epoch, is_train=False)
+            writer.write(ev_results, epoch, is_train=False, num_eval=e)
 
         if epoch % dicts['save_freq'] == 0:
             utils.save_model(tom_net, dicts, experiment_folder, epoch)
@@ -40,18 +40,15 @@ def train(tom_net, optimizer, train_loader, eval_loaders, experiment_folder, wri
 
 
 def evaluate(tom_net, eval_loader, visualizer=None, is_visualize=False,
-             preference=None, mode='train'):
+             preference=None, mode='train', num_agent=1000):
     '''
     we provide the base result of figure 2,
     but if you want to show the other results,
     run the inference.py after you have the models.
     '''
     with tr.no_grad():
-        ev_results, ev_targs = tom_net.evaluate(eval_loader, is_visualize=is_visualize)
-    if mode == 'train':
-        filename=0
-    else:
-        filename=2
+        ev_results, ev_targs = tom_net.evaluate(eval_loader, is_visualize=is_visualize, num_agent=num_agent)
+    filename=mode
     if is_visualize:
         indiv_length = len(ev_results['past_traj'])
         for n in range(indiv_length):
@@ -63,9 +60,9 @@ def evaluate(tom_net, eval_loader, visualizer=None, is_visualize=False,
             visualizer.get_prefer(ev_results['pred_consumption'][n], filename, sample_num=n)
             visualizer.get_sr(ev_results['curr_state'][n], ev_results['pred_sr'][n], filename, sample_num=n)
 
-            visualizer.get_action(ev_targs['targ_actions'][n], filename + 1, sample_num=n)
-            visualizer.get_prefer(ev_targs['targ_consumption'][n], filename + 1, sample_num=n)
-            visualizer.get_sr(ev_results['curr_state'][n], ev_targs['targ_sr'][n], filename + 1, sample_num=n)
+            visualizer.get_action(ev_targs['targ_actions'][n], filename + '_targ', sample_num=n)
+            visualizer.get_prefer(ev_targs['targ_consumption'][n], filename + '_targ', sample_num=n)
+            visualizer.get_sr(ev_results['curr_state'][n], ev_targs['targ_sr'][n], filename + '_targ', sample_num=n)
 
 
         visualizer.get_consume_char(ev_results['e_char'], preference, filename)
@@ -127,7 +124,7 @@ def run_experiment(num_epoch, main_experiment, sub_experiment, num_agent, batch_
                             max_epoch=num_epoch, height=env.height, width=env.width)
     # Train
     optimizer = optim.Adam(tom_net.parameters(), lr=lr)
-    train(tom_net, optimizer, train_loader, eval_loaders, experiment_folder, summary_writer, visualizer, dicts)
+    train(tom_net, optimizer, train_loader, eval_loaders, experiment_folder, summary_writer, visualizer, num_agent, dicts)
 
     # Visualize Train
     train_fixed_loader = DataLoader(train_dataset, batch_size=num_agent, shuffle=False)
