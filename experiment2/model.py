@@ -81,7 +81,8 @@ class CharNet(nn.Module):
                 tr.zeros(1, batch_size, 64, device='cuda'))
 
     def forward(self, obs):
-        # batch, num_past, num_step, channel, height, width
+        # batch, num_past, num_step, height, width, channel
+        obs = obs.permute(0, 1, 2, 5, 3, 4)
         b, num_past, num_step, c, h, w = obs.shape
         past_e_char = []
         for p in range(num_past):
