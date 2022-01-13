@@ -101,6 +101,7 @@ def run_experiment(num_epoch, main_experiment, sub_experiment, num_agent, batch_
         test_2_prefer = np.load(eval_dirs[1] + "/true_prefer.npy")
         test_3_prefer = np.load(eval_dirs[2] + "/true_prefer.npy")
         train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
+        eval_prefers = [train_prefer, test_1_prefer, test_2_prefer, test_3_prefer]
 
     else:
         if num_agent > 1000:
@@ -118,6 +119,7 @@ def run_experiment(num_epoch, main_experiment, sub_experiment, num_agent, batch_
         train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
         eval_loader = DataLoader(eval_dataset, batch_size=batch_size, shuffle=False) #len(eval_dataset)
         eval_loaders = [eval_loader]
+        train_prefer = train_storage.true_preference
 
     summary_writer = writer.Writer(os.path.join(experiment_folder, 'logs'))
     visualizer = Visualizer(os.path.join(experiment_folder, 'images'), grid_per_pixel=8,
@@ -128,16 +130,11 @@ def run_experiment(num_epoch, main_experiment, sub_experiment, num_agent, batch_
 
     # Visualize Train
     train_fixed_loader = DataLoader(train_dataset, batch_size=num_agent, shuffle=False)
-    train_prefer = train_storage.true_preference
     tr_results = evaluate(tom_net, train_fixed_loader, visualizer, is_visualize=True, preference=train_prefer)
     # Test
-    eval_storage.reset()
-    test_data = eval_storage.extract()
-    test_data['exp'] = 'exp2'
-    test_dataset = dataset.ToMDataset(**test_data)
-    test_loader = DataLoader(test_dataset, batch_size=num_agent, shuffle=False)
-    preference = eval_storage.true_preference
-    ev_results = evaluate(tom_net, test_loader, visualizer, is_visualize=True, preference=preference, mode='eval')
+    for i, (eval_loader, eval_prefer) in enumerate(zip(eval_loaders, eval_prefers)):
+        ev_results = evaluate(tom_net, eval_loader, visualizer,
+                              is_visualize=True, preference=eval_prefer, mode='eval{}'.format(i))
 
 def make_dataset(data_dir):
     data = {}
