@@ -23,7 +23,7 @@ def parse_args():
     parser.add_argument('--sub_exp', '-se', type=int, default=1)
     parser.add_argument('--alpha', '-a', type=float, default=0.01)
     parser.add_argument('--base_dir', '-b', type=str, default='./data')
-    parser.add_argument('--slicing', '-s', type=int, default=1000)
+    parser.add_argument('--slicing', '-s', type=int, default=100000)
     parser.add_argument('--is_wall', '-w', type=get_bool, default=True)
     args = parser.parse_args()
     return args
