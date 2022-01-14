@@ -1,7 +1,15 @@
 # from agent.agent import BaseAgent
+import sys
+
+sys.path.append('./')
 import numpy as np
 from environment.env import GridWorldEnv
 
+
+
+# from agent.agent import BaseAgent
+import numpy as np
+from environment.env import GridWorldEnv
 
 # class RewardSeekingAgent(BaseAgent):
 class RewardSeekingAgent():
@@ -19,6 +27,7 @@ class RewardSeekingAgent():
         self.theta = 0.0001
         self.move_penalty = move_penalty
         self.most_prefer = np.argmax(self.reward)
+        self.wall_reward = -0.05
 
     def act(self, observation):
         agent_channel = observation[:, :, -1]
@@ -50,6 +59,27 @@ class RewardSeekingAgent():
             P[state] = {a: [] for a in range(self.num_action)}
 
             done, reward = self._done_reward(observation, x, y)
+            prob=1
+
+            if done:
+                P[state][0] = [(prob, [x, y], reward, True)]
+                P[state][1] = [(prob, [x, y], reward, True)]
+                P[state][2] = [(prob, [x, y], reward, True)]
+                P[state][3] = [(prob, [x, y], reward, True)]
+                P[state][4] = [(prob, [x, y], reward, True)]
+            else:
+                # action: ['Stay', 'Down', 'Right', 'Up', 'Left']
+                next_s_0 = [x, y]
+                next_s_1 = [x + 1, y] if (x + 1) < self.obs_height else [x, y]
+                next_s_2 = [x, y + 1] if (y + 1) < self.obs_width else [x, y]
+                next_s_3 = [x - 1, y] if (x - 1) > -1 else [x, y]
+                next_s_4 = [x, y - 1] if (y - 1) > -1 else [x, y]
+
+                P[state][0] = [(prob, next_s_0, reward, self._done_reward(observation, next_s_0[0], next_s_0[1])[0])]
+                P[state][1] = [(prob, next_s_1, reward, self._done_reward(observation, next_s_1[0], next_s_1[1])[0])]
+                P[state][2] = [(prob, next_s_2, reward, self._done_reward(observation, next_s_2[0], next_s_2[1])[0])]
+                P[state][3] = [(prob, next_s_3, reward, self._done_reward(observation, next_s_3[0], next_s_3[1])[0])]
+                P[state][4] = [(prob, next_s_4, reward, self._done_reward(observation, next_s_4[0], next_s_4[1])[0])]
 
             P[state][0] = [(1.0, [x, y], reward, done)]
             P[state][1] = [(1.0, [x+1, y], reward, done)]
@@ -63,19 +93,14 @@ class RewardSeekingAgent():
 
     def _done_reward(self, observation, xi, yi):
         done = False
-        reward = 0  # reward by wall and objects
+        reward = self.move_penalty  # reward by wall and objects
 
-        # wall trap the agent
-        if observation[xi, yi, 0] == 1:
-            done = True
-            reward += -0.05
-        # consuming objects
-        else:
-            for object_idx in [1, 2, 3, 4]:
-                if observation[xi, yi, object_idx] == 1:
-                    done = True
-                    reward += self.reward[object_idx - 1]
-                    break
+        # wall trap the agent. consuming objects.
+        for thing_idx in range(self.num_object + 1):
+            if observation[xi, yi, thing_idx] == 1:
+                reward = self.wall_reward if thing_idx == 0 else self.reward[thing_idx - 1]
+                done = True
+                break
 
         return done, reward
 
@@ -115,7 +140,7 @@ class RewardSeekingAgent():
 
 
 if __name__ == '__main__':
-    config = dict(height=11, width=11, pixel_per_grid=8, num_wall=0, preference=100, exp=4, save=True)
+    config = dict(height=11, width=11, pixel_per_grid=8, num_wall=0, preference=100, exp=2, save=True)
     env = GridWorldEnv(config)
     print(env.preference)
     print(env.prefer_reward)
@@ -145,9 +170,6 @@ if __name__ == '__main__':
     print("action index to text = ['Stay', 'Down', 'Right', 'Up', 'Left']")
     obs, reward, done, _ = env.step(action)
     env.obs_well_show()
-
-
-
 
 
 
