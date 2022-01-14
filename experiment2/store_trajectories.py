@@ -6,17 +6,17 @@ class Storage(object):
 
     def __init__(self, env, population, num_past, num_step):
         self.env = env
-        self.past_trajectories = np.zeros([len(population), num_past, num_step, env.height, env.width, 11])
-        self.current_state = np.zeros([len(population), env.height, env.width, 6])
-        self.target_action = np.zeros([len(population), 1])
-        self.target_preference = np.full([len(population), 1], 4)
-        self.true_preference = np.zeros([len(population), 4])
-        self.target_sr = np.zeros([len(population), env.height, env.width, 3])
-        self.target_value = np.zeros([len(population), num_past, env.height, env.width])
-        self.dones = np.zeros([len(population), num_past, num_step, 1])
+        self.past_trajectories = np.zeros([len(population), num_past, num_step, env.height, env.width, 11], dtype=np.int16)
+        self.current_state = np.zeros([len(population), env.height, env.width, 6], dtype=np.int16)
+        self.target_action = np.zeros([len(population), 1], dtype=np.int16)
+        self.target_preference = np.full([len(population), 1], 4, dtype=np.float32)
+        self.true_preference = np.zeros([len(population), 4], dtype=np.float32)
+        self.target_sr = np.zeros([len(population), env.height, env.width, 3], dtype=np.int16)
+        self.target_value = np.zeros([len(population), num_past, env.height, env.width], dtype=np.int16)
+        self.dones = np.zeros([len(population), num_past, num_step, 1], dtype=np.int16)
         self.population = population
         self.num_past = num_past
-        self.action_count = np.zeros([len(population), 5])
+        self.action_count = np.zeros([len(population), 5], dtype=np.float32)
         self.num_step = num_step
 
     def extract(self, custom_past=-100, custom_query=-100, slicing=None):
