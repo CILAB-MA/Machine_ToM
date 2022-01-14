@@ -42,7 +42,7 @@ class DataCollector(object):
             3) Same Population / Same Past Traj / New urr State
         '''
 
-        exp_kwargs, env_kwargs, model_kwargs, agent_type = get_configs(1)
+        exp_kwargs, env_kwargs, model_kwargs, agent_type = get_configs(num_exp=1)
         print('is_wall', args.is_wall)
         # make settings
         if args.main_exp == 2:
