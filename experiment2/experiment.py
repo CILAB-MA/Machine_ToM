@@ -51,8 +51,10 @@ def evaluate(tom_net, eval_loader, visualizer=None, is_visualize=False,
     filename=mode
     if is_visualize:
         indiv_length = len(ev_results['past_traj'])
+        env_size = ev_results['past_traj'][0][0][0].shape
+        env_height, env_width = env_size[0] , env_size[1]
         for n in range(indiv_length):
-            _, past_actions = np.where(ev_results['past_traj'][n, 0, :, :, :, 6:].sum((1, 2)) == 121)
+            _, past_actions = np.where(ev_results['past_traj'][n, 0, :, :, :, 6:].sum((1, 2)) == env_height*env_width)
             agent_xys = np.where(ev_results['past_traj'][n, 0, :, :, :, 5] == 1)
             visualizer.get_past_traj(ev_results['past_traj'][n][0][0], agent_xys, past_actions, filename, sample_num=n)
             visualizer.get_curr_state(ev_results['curr_state'][n], filename, sample_num=n)
