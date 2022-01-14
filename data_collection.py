@@ -47,7 +47,7 @@ class DataCollector(object):
         # make settings
         if args.main_exp == 2:
             self.population = utils.make_pool(agent_type, exp_kwargs['move_penalty'], args.alpha, args.num_agent)
-            self.diff_population = utils.make_pool(agent_type, exp_kwargs['move_penalty'], args.alpha, args.num_agent)
+            self.diff_population = utils.make_pool(agent_type, exp_kwargs['move_penalty'], args.alpha, args.num_agent / 5)
             foldername = 'exp_{}_sub_{}_agent_{}_id_{}'.format(args.main_exp, args.sub_exp,
                                                                          args.num_agent, args.number)
 
