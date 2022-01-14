@@ -112,7 +112,6 @@ class RewardSeekingAgent():
                 if done:
                     A[a] += prob * reward
                 else:
-                    reward += self.move_penalty
                     A[a] += prob * (reward + self.discount_factor * self.V[next_x][next_y])
         return A
 
