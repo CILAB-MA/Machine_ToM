@@ -6,17 +6,16 @@ class Storage(object):
 
     def __init__(self, env, population, num_past, num_step):
         self.env = env
-        self.past_trajectories = np.zeros([len(population), num_past, num_step, env.height, env.width, 11], dtype=np.int16)
-        self.current_state = np.zeros([len(population), env.height, env.width, 6], dtype=np.int16)
+        self.past_trajectories = np.zeros([len(population), num_past, num_step, env.height, env.width, 11], dtype=np.float16)
+        self.current_state = np.zeros([len(population), env.height, env.width, 6], dtype=np.float16)
         self.target_action = np.zeros([len(population), 1], dtype=np.int16)
-        self.target_preference = np.full([len(population), 1], 4, dtype=np.float32)
-        self.true_preference = np.zeros([len(population), 4], dtype=np.float32)
-        self.target_sr = np.zeros([len(population), env.height, env.width, 3], dtype=np.int16)
-        self.target_value = np.zeros([len(population), num_past, env.height, env.width], dtype=np.int16)
+        self.target_preference = np.full([len(population), 1], 4, dtype=np.float16)
+        self.true_preference = np.zeros([len(population), 4], dtype=np.float16)
+        self.target_sr = np.zeros([len(population), env.height, env.width, 3], dtype=np.float16)
         self.dones = np.zeros([len(population), num_past, num_step, 1], dtype=np.int16)
         self.population = population
         self.num_past = num_past
-        self.action_count = np.zeros([len(population), 5], dtype=np.float32)
+        self.action_count = np.zeros([len(population), 5], dtype=np.int16)
         self.num_step = num_step
 
     def extract(self, custom_past=-100, custom_query=-100, slicing=None):
@@ -37,7 +36,6 @@ class Storage(object):
                     obs = self.env.reset(wall=True)
                 #self.env.obs_well_show()
                 agent.train(obs)
-                self.target_value[agent_index, past_epi] = agent.V
                 # gathering past trajectories
                 for step in range(self.num_step):
                     action = agent.act(obs)
@@ -91,8 +89,7 @@ class Storage(object):
         #))
         return dict(episodes=self.past_trajectories[:len(population)], curr_state=self.current_state[:len(population)],
                     target_action=self.target_action[:len(population)], target_prefer=self.target_preference[:len(population)],
-                    target_sr=self.target_sr[:len(population)], true_prefer=self.true_preference[:len(population)],
-                    target_value=self.target_value[:len(population)])
+                    target_sr=self.target_sr[:len(population)], true_prefer=self.true_preference[:len(population)])
 
     def reset(self):
         self.past_trajectories = np.zeros(self.past_trajectories.shape)
