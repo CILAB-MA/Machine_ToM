@@ -88,22 +88,14 @@ def run_experiment(num_epoch, main_experiment, sub_experiment, num_agent, batch_
     if train_dir != 'none':
         eval_dirs = glob.glob(eval_dir + '*')
         train_dataset = make_dataset(train_dir)
-        eval_dataset_0 = make_dataset(train_dir)
         eval_dataset_1 = make_dataset(eval_dirs[0])
-        eval_dataset_2 = make_dataset(eval_dirs[1])
-        eval_dataset_3 = make_dataset(eval_dirs[2])
-        eval_loader_0 = DataLoader(eval_dataset_0, batch_size=num_agent, shuffle=False)
-        eval_loader_1 = DataLoader(eval_dataset_1, batch_size=num_agent, shuffle=False)
-        eval_loader_2 = DataLoader(eval_dataset_2, batch_size=num_agent, shuffle=False)
-        eval_loader_3 = DataLoader(eval_dataset_3, batch_size=num_agent, shuffle=False)
-        eval_loaders = [eval_loader_0, eval_loader_1, eval_loader_2, eval_loader_3]
+        eval_loader_1 = DataLoader(eval_dataset_1, batch_size=batch_size, shuffle=False)
+        eval_loaders = [eval_loader_1]
 
         train_prefer = np.load(train_dir + "/true_prefer.npy")
         test_1_prefer = np.load(eval_dirs[0] + "/true_prefer.npy")
-        test_2_prefer = np.load(eval_dirs[1] + "/true_prefer.npy")
-        test_3_prefer = np.load(eval_dirs[2] + "/true_prefer.npy")
         train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
-        eval_prefers = [train_prefer, test_1_prefer, test_2_prefer, test_3_prefer]
+        eval_prefers = [test_1_prefer]
 
     else:
         if num_agent > 1000:

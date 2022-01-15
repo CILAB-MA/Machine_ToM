@@ -237,8 +237,8 @@ class PredNet(nn.Module):
             action_acc += tr.sum(pred_action_ind == target_action).item()
             consumption_acc += tr.sum(pred_consumption_ind == target_consume).item()
 
-        dicts = dict(action_acc=action_acc / self.num_agent,
-                     consumption_acc=consumption_acc / self.num_agent,
+        dicts = dict(action_acc=action_acc / len(pred_action_ind.cpu().numpy()),
+                     consumption_acc=consumption_acc / len(pred_action_ind.cpu().numpy()),
                      action_loss=a_loss / len(data_loader), consumption_loss=c_loss / len(data_loader),
                      sr_loss=sr_loss / len(data_loader), total_loss=tot_loss / len(data_loader))
         return dicts
@@ -308,8 +308,8 @@ class PredNet(nn.Module):
         dicts['sr_loss'] = s_loss / len(data_loader)
         dicts['total_loss'] = tot_loss / len(data_loader)
 
-        dicts['action_acc'] = action_acc / num_agent
-        dicts['consumption_acc'] = consumption_acc / num_agent
+        dicts['action_acc'] = action_acc / len(pred_action_ind.cpu().numpy())
+        dicts['consumption_acc'] = consumption_acc / len(pred_action_ind.cpu().numpy())
 
 
         return dicts, targets
