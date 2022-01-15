@@ -26,7 +26,7 @@ def train(tom_net, optimizer, train_loader, eval_loaders, experiment_folder, wri
         print(train_msg)
         writer.write(results, epoch, is_train=True)
         for e, eval_loader in enumerate(eval_loaders):
-            ev_results = evaluate(tom_net, eval_loader, num_agent=num_agent)
+            ev_results = evaluate(tom_net, eval_loader, num_agent=int(num_agent / 5))
             eval_msg = 'Eval{}| Epoch {} Loss |Total {:.4f} Consume {:.4f} Action {:.4f} SR {:.4f}| Acc |Action {:.4f} Consume {:.4f}|'.format(
                 e, epoch, ev_results['total_loss'], ev_results['consumption_loss'], ev_results['action_loss'],
                 ev_results['sr_loss'], ev_results['action_acc'], ev_results['consumption_acc'])

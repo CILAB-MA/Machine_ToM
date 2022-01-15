@@ -308,8 +308,9 @@ class PredNet(nn.Module):
         dicts['sr_loss'] = s_loss / len(data_loader)
         dicts['total_loss'] = tot_loss / len(data_loader)
 
-        dicts['action_acc'] = action_acc / len(pred_action_ind.cpu().numpy())
-        dicts['consumption_acc'] = consumption_acc / len(pred_action_ind.cpu().numpy())
+        print(num_agent)
+        dicts['action_acc'] = action_acc / num_agent
+        dicts['consumption_acc'] = consumption_acc / num_agent
 
 
         return dicts, targets
