@@ -23,7 +23,7 @@ def parse_args():
     parser.add_argument('--sub_exp', '-se', type=int, default=1)
     parser.add_argument('--alpha', '-a', type=float, default=0.01)
     parser.add_argument('--base_dir', '-b', type=str, default='./data')
-    parser.add_argument('--slicing', '-s', type=int, default=100000)
+    parser.add_argument('--slicing', '-s', type=int, default=200)
     parser.add_argument('--is_wall', '-w', type=get_bool, default=True)
     args = parser.parse_args()
     return args
@@ -58,8 +58,8 @@ class DataCollector(object):
             empty_list = get_empty(self.fixed_mdp)
 
             self.train_past = np.zeros((len(self.population), 1, env_kwargs['height'], env_kwargs['width'], 6))
-            self.eval1_past = np.zeros((len(self.population), 1, env_kwargs['height'], env_kwargs['width'], 6))
-            self.eval2_past = np.zeros((len(self.population), 1, env_kwargs['height'], env_kwargs['width'], 6))
+            self.eval1_past = np.zeros((int(len(self.population)/5), 1, env_kwargs['height'], env_kwargs['width'], 6))
+            self.eval2_past = np.zeros((int(len(self.population)/5), 1, env_kwargs['height'], env_kwargs['width'], 6))
 
             for num_past_i in range(exp_kwargs['num_past']):
                 # make train past mdp
@@ -74,8 +74,10 @@ class DataCollector(object):
                 for i in range(args.slicing - 1):
                     eval1_past = np.append(eval1_past, get_new_loc(self.fixed_mdp, empty_list), axis=0)
                     eval2_past = np.append(eval2_past, get_new_loc(self.fixed_mdp, empty_list), axis=0)
-                self.eval1_past = np.append(self.eval1_past, eval1_past.reshape((len(self.population), 1, env_kwargs['height'], env_kwargs['width'], 6)), axis=1)
-                self.eval2_past = np.append(self.eval2_past, eval2_past.reshape((len(self.population), 1, env_kwargs['height'], env_kwargs['width'], 6)), axis=1)
+                print(self.eval1_past.shape)
+
+                self.eval1_past = np.append(self.eval1_past, eval1_past.reshape((int(len(self.population)/5), 1, env_kwargs['height'], env_kwargs['width'], 6)), axis=1)
+                self.eval2_past = np.append(self.eval2_past, eval2_past.reshape((int(len(self.population)/5), 1, env_kwargs['height'], env_kwargs['width'], 6)), axis=1)
             self.train_past = self.train_past[:, 1:, :, :, :]
             self.eval1_past = self.eval1_past[:, 1:, :, :, :]
             self.eval2_past = self.eval2_past[:, 1:, :, :, :]
