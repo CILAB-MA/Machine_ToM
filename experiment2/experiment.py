@@ -26,7 +26,7 @@ def train(tom_net, optimizer, train_loader, eval_loaders, experiment_folder, wri
         print(train_msg)
         writer.write(results, epoch, is_train=True)
         for e, eval_loader in enumerate(eval_loaders):
-            ev_results = evaluate(tom_net, eval_loader, num_agent=num_agent)
+            ev_results = evaluate(tom_net, eval_loader, num_agent=int(num_agent / 5))
             eval_msg = 'Eval{}| Epoch {} Loss |Total {:.4f} Consume {:.4f} Action {:.4f} SR {:.4f}| Acc |Action {:.4f} Consume {:.4f}|'.format(
                 e, epoch, ev_results['total_loss'], ev_results['consumption_loss'], ev_results['action_loss'],
                 ev_results['sr_loss'], ev_results['action_acc'], ev_results['consumption_acc'])
@@ -88,22 +88,14 @@ def run_experiment(num_epoch, main_experiment, sub_experiment, num_agent, batch_
     if train_dir != 'none':
         eval_dirs = glob.glob(eval_dir + '*')
         train_dataset = make_dataset(train_dir)
-        eval_dataset_0 = make_dataset(train_dir)
         eval_dataset_1 = make_dataset(eval_dirs[0])
-        eval_dataset_2 = make_dataset(eval_dirs[1])
-        eval_dataset_3 = make_dataset(eval_dirs[2])
-        eval_loader_0 = DataLoader(eval_dataset_0, batch_size=num_agent, shuffle=False)
-        eval_loader_1 = DataLoader(eval_dataset_1, batch_size=num_agent, shuffle=False)
-        eval_loader_2 = DataLoader(eval_dataset_2, batch_size=num_agent, shuffle=False)
-        eval_loader_3 = DataLoader(eval_dataset_3, batch_size=num_agent, shuffle=False)
-        eval_loaders = [eval_loader_0, eval_loader_1, eval_loader_2, eval_loader_3]
+        eval_loader_1 = DataLoader(eval_dataset_1, batch_size=batch_size, shuffle=False)
+        eval_loaders = [eval_loader_1]
 
         train_prefer = np.load(train_dir + "/true_prefer.npy")
         test_1_prefer = np.load(eval_dirs[0] + "/true_prefer.npy")
-        test_2_prefer = np.load(eval_dirs[1] + "/true_prefer.npy")
-        test_3_prefer = np.load(eval_dirs[2] + "/true_prefer.npy")
         train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
-        eval_prefers = [train_prefer, test_1_prefer, test_2_prefer, test_3_prefer]
+        eval_prefers = [test_1_prefer]
 
     else:
         if num_agent > 1000:
@@ -131,7 +123,7 @@ def run_experiment(num_epoch, main_experiment, sub_experiment, num_agent, batch_
     train(tom_net, optimizer, train_loader, eval_loaders, experiment_folder, summary_writer, visualizer, num_agent, dicts)
 
     # Visualize Train
-    train_fixed_loader = DataLoader(train_dataset, batch_size=num_agent, shuffle=False)
+    train_fixed_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=False)
     tr_results = evaluate(tom_net, train_fixed_loader, visualizer, is_visualize=True, preference=train_prefer)
     # Test
     for i, (eval_loader, eval_prefer) in enumerate(zip(eval_loaders, eval_prefers)):

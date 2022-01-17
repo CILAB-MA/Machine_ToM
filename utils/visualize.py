@@ -4,48 +4,6 @@ import numpy as np
 import cv2
 from sklearn.manifold import TSNE
 
-
-def get_train_figure(measures, dicts, save_path, filename):
-    plt.figure()
-    palette = ['seagreen', 'royalblue', 'violet', 'darkorange', 'olivedrab', 'deepskyblue']
-    plt.plot(measures[i], color=palette[i])
-    plt.title(filename[:-4])
-    plt.legend(loc=1)
-    filename_str = '{}_'.format(filename)
-    dkeys = dicts.keys()
-    for d in dkeys:
-        vals = dicts[d]
-        filename_str += '{}_{}_'.format(d, vals)
-
-    filepath = os.path.join(save_path, filename_str)
-    plt.savefig(filepath)
-    plt.clf()
-
-def get_test_figure(measures, dicts, save_path, filename='test.jpg'):
-    plt.figure()
-    palette = ['seagreen', 'royalblue', 'violet', 'darkorange', 'olivedrab', 'deepskyblue']
-    plt.plot(measures[i], color=palette[i])
-    filename_str = '{}_'.format(filename)
-    dkeys = dicts.keys()
-    for d in dkeys:
-        vals = dicts[d]
-        filename_str += '{}_{}_'.format(d, vals)
-
-    plt.legend(title='Test_Result', loc=1)
-    filepath = os.path.join(save_path, filename_str)
-    plt.savefig(filepath)
-    plt.clf()
-
-def visualize_embedding(e_char, labels, count, save_path, filename='e_char.jpg'):
-    color_palette = np.array([[0, 0, 1], [1, 0, 0], [0, 1, 0], [1, 1, 0], [204/255, 0, 204/255]])
-    colors = color_palette[labels] * np.reshape(count, (-1, 1))
-    plt.figure()
-    plt.scatter(e_char[:, 0], e_char[:, 1], c=colors)
-    filepath = os.path.join(save_path, filename)
-    plt.savefig(filepath)
-    plt.clf()
-
-
 class Visualizer:
 
     def __init__(self, output_dir, grid_per_pixel, max_epoch, height, width):
@@ -268,3 +226,31 @@ class Visualizer:
             os.makedirs(os.path.join(self.output_dir, foldername))
         plt.savefig(output_file)
         plt.clf()
+
+
+if __name__ == '__main__':
+    import argparse
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--data_dir', '-d', type=str, default='./')
+    parser.add_argument('--output_dir', '-o', type=str, default='./test')
+    args = parser.parse_args()
+
+    episodes = np.load(os.path.join(args.data_dir, 'episodes.npy'))
+    curr_state = np.load(os.path.join(args.data_dir, 'curr_state.npy'))
+    targ_action = np.load(os.path.join(args.data_dir, 'target_action.npy'))
+    targ_prefer = np.load(os.path.join(args.data_dir, 'target_prefer.npy'))
+    targ_sr = np.load(os.path.join(args.data_dir, 'target_sr.npy'))
+    true_prefer = np.load(os.path.join(args.data_dir, 'true_prefer.npy'))
+    visualizer = Visualizer(args.output_dir, 8, len(episodes), 11, 11)
+    env_height, env_width = episodes.shape[3], episodes.shape[4]
+    for i, (episode, curr, sr, action, consumed, prefer) in enumerate(zip(episodes, curr_state, targ_sr, targ_action, targ_prefer, true_prefer)):
+        _, past_actions = np.where(episode[0, :, :, :, 6:].sum((1, 2)) == env_height * env_width)
+        agent_xys = np.where(episode[0, :, :, :, 5] == 1)
+        visualizer.get_past_traj(episode[0][0], agent_xys, past_actions, i, foldername='past_traj', sample_num=0)
+        visualizer.get_action(action, i, foldername='action', sample_num=0)
+        visualizer.get_prefer(np.log(consumed), i, foldername='consumed', sample_num=0)
+        visualizer.get_sr(curr, sr, i, foldername='sr', sample_num=0)
+        visualizer.get_curr_state(curr, i, foldername='curr_state', sample_num=0)
+        if i > 100000:
+            break
+
