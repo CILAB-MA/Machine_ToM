@@ -8,16 +8,17 @@ EXPERIMENTS = [experiment1, experiment2] # experiment 3 will be update
 
 def parse_args():
     parser = argparse.ArgumentParser('For ToM Passive Exp')
-    parser.add_argument('--num_epoch', '-e', type=int, default=100)
-    parser.add_argument('--main_exp', '-me', type=int, default=1)
+    parser.add_argument('--num_epoch', '-e', type=int, default=500)
+    parser.add_argument('--main_exp', '-me', type=int, default=2)
     parser.add_argument('--sub_exp', '-se', type=int, default=1)
-    parser.add_argument('--num_agent', '-na', type=int, default=1000)
-    parser.add_argument('--batch_size', '-b', type=int, default=16)
+    parser.add_argument('--num_agent', '-na', type=int, default=500)
+    parser.add_argument('--batch_size', '-b', type=int, default=32)
     parser.add_argument('--lr', '-l', type=float, default=1e-4)
     parser.add_argument('--alpha', '-a', type=float, default=0.01)
     parser.add_argument('--save_freq', '-s', type=int, default=10)
-    parser.add_argument('--train_dir', default='none', type=str)
-    parser.add_argument('--eval_dir', default='none', type=str)
+    parser.add_argument('--train_dir', default='./data/exp_1_sub_4_agent_500_id_60/train/', type=str)
+    parser.add_argument('--eval_dir', default='./data/exp_1_sub_4_agent_500_id_60/eval/', type=str)
+    parser.add_argument('--act_pri', '-ap', type=bool, default=True)
     args = parser.parse_args()
     return args
 
@@ -29,7 +30,7 @@ def main(args):
                                               batch_size=args.batch_size, lr=args.lr,
                                               experiment_folder=experiment_folder,
                                               alpha=args.alpha, save_freq=args.save_freq,
-                                              train_dir=args.train_dir, eval_dir=args.eval_dir)
+                                              train_dir=args.train_dir, eval_dir=args.eval_dir, act_pri=args.act_pri)
 
 
 if __name__ == '__main__':

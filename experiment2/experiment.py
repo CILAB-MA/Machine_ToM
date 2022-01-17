@@ -40,7 +40,7 @@ def train(tom_net, optimizer, train_loader, eval_loaders, experiment_folder, wri
 
 
 def evaluate(tom_net, eval_loader, visualizer=None, is_visualize=False,
-             preference=None, mode='train'):
+             preference=None, act_preference=None, mode='train'):
     '''
     we provide the base result of figure 2,
     but if you want to show the other results,
@@ -70,11 +70,13 @@ def evaluate(tom_net, eval_loader, visualizer=None, is_visualize=False,
 
         visualizer.get_consume_char(ev_results['e_char'], preference, filename)
         visualizer.tsne_consume_char(ev_results['e_char'], preference, filename)
+        if act_preference != None:
+            visualizer.tsne_consume_char_act(ev_results['e_char'], preference, act_preference, filename)
     return ev_results
 
 
 def run_experiment(num_epoch, main_experiment, sub_experiment, num_agent, batch_size, lr,
-                   experiment_folder, alpha, save_freq, train_dir, eval_dir):
+                   experiment_folder, alpha, save_freq, train_dir, eval_dir, act_pri):
 
 
     exp_kwargs, env_kwargs, model_kwargs, agent_type = get_configs(sub_experiment)
@@ -85,7 +87,7 @@ def run_experiment(num_epoch, main_experiment, sub_experiment, num_agent, batch_
     if model_kwargs['device'] == 'cuda':
         tom_net = tom_net.cuda()
     dicts = dict(main=main_experiment, sub=sub_experiment, alpha=alpha, batch_size=batch_size,
-                 lr=lr, num_epoch=num_epoch, save_freq=save_freq)
+                 lr=lr, num_epoch=num_epoch, save_freq=save_freq, act_pri=act_pri)
     if train_dir != 'none':
         eval_dirs = glob.glob(eval_dir + '*')
         train_dataset = make_dataset(train_dir)
@@ -93,17 +95,25 @@ def run_experiment(num_epoch, main_experiment, sub_experiment, num_agent, batch_
         eval_dataset_1 = make_dataset(eval_dirs[0])
         eval_dataset_2 = make_dataset(eval_dirs[1])
         eval_dataset_3 = make_dataset(eval_dirs[2])
-        eval_loader_0 = DataLoader(eval_dataset_0, batch_size=batch_size, shuffle=False)
-        eval_loader_1 = DataLoader(eval_dataset_1, batch_size=batch_size, shuffle=False)
-        eval_loader_2 = DataLoader(eval_dataset_2, batch_size=batch_size, shuffle=False)
-        eval_loader_3 = DataLoader(eval_dataset_3, batch_size=batch_size, shuffle=False)
+        eval_loader_0 = DataLoader(eval_dataset_0, batch_size=num_agent, shuffle=False)
+        eval_loader_1 = DataLoader(eval_dataset_1, batch_size=num_agent, shuffle=False)
+        eval_loader_2 = DataLoader(eval_dataset_2, batch_size=num_agent, shuffle=False)
+        eval_loader_3 = DataLoader(eval_dataset_3, batch_size=num_agent, shuffle=False)
         eval_loaders = [eval_loader_0, eval_loader_1, eval_loader_2, eval_loader_3]
 
         train_prefer = np.load(train_dir + "/true_prefer.npy")
         test_1_prefer = np.load(eval_dirs[0] + "/true_prefer.npy")
         test_2_prefer = np.load(eval_dirs[1] + "/true_prefer.npy")
         test_3_prefer = np.load(eval_dirs[2] + "/true_prefer.npy")
+        if act_pri:
+            train_act_prefer = np.load(train_dir + "/true_act_prefer.npy")
+            test_1_act_prefer = np.load(eval_dirs[0] + "/true_act_prefer.npy")
+            test_2_act_prefer = np.load(eval_dirs[1] + "/true_act_prefer.npy")
+            test_3_act_prefer = np.load(eval_dirs[2] + "/true_act_prefer.npy")
         train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
+        eval_prefers = [train_prefer, test_1_prefer, test_2_prefer, test_3_prefer]
+        if act_pri:
+            eval_act_prefers = [train_act_prefer, test_1_act_prefer, test_2_act_prefer, test_3_act_prefer]
 
     else:
         population = utils.make_pool(agent_type, exp_kwargs['move_penalty'], alpha, num_agent)
@@ -119,6 +129,7 @@ def run_experiment(num_epoch, main_experiment, sub_experiment, num_agent, batch_
         train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
         eval_loader = DataLoader(eval_dataset, batch_size=batch_size, shuffle=False) #len(eval_dataset)
         eval_loaders = [eval_loader]
+        train_prefer = train_storage.true_preference
 
     summary_writer = writer.Writer(os.path.join(experiment_folder, 'logs'))
     visualizer = Visualizer(os.path.join(experiment_folder, 'images'), grid_per_pixel=8,
@@ -129,16 +140,18 @@ def run_experiment(num_epoch, main_experiment, sub_experiment, num_agent, batch_
 
     # Visualize Train
     train_fixed_loader = DataLoader(train_dataset, batch_size=1000, shuffle=False)
-    train_prefer = train_storage.true_preference
     tr_results = evaluate(tom_net, train_fixed_loader, visualizer, is_visualize=True, preference=train_prefer)
     # Test
-    eval_storage.reset()
-    test_data = eval_storage.extract()
-    test_data['exp'] = 'exp2'
-    test_dataset = dataset.ToMDataset(**test_data)
-    test_loader = DataLoader(test_dataset, batch_size=1000, shuffle=False)
-    preference = eval_storage.true_preference
-    ev_results = evaluate(tom_net, test_loader, visualizer, is_visualize=True, preference=preference, mode='eval')
+    if act_pri:
+        for i, (eval_loader, eval_prefer, eval_act_prefer) in enumerate(zip(eval_loaders, eval_prefers, eval_act_prefers)):
+            ev_results = evaluate(tom_net, eval_loader, visualizer,
+                                  is_visualize=True, preference=eval_prefer, act_preference=eval_act_prefer,
+                                  mode='eval{}'.format(i))
+    else:
+        for i, (eval_loader, eval_prefer, eval_act_prefer) in enumerate(zip(eval_loaders, eval_prefers)):
+            ev_results = evaluate(tom_net, eval_loader, visualizer,
+                                  is_visualize=True, preference=eval_prefer, act_preference=eval_act_prefer,
+                                  mode='eval{}'.format(i))
 
 def make_dataset(data_dir):
     data = {}

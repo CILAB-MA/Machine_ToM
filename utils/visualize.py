@@ -190,14 +190,14 @@ class Visualizer:
             if i != 6:
                 xy_object = np.where(obs[:, :, i] == 1)
             else:
-                xy_object = np.where(sr_preds[: , :, -1] != 0)
+                xy_object = np.where(sr_preds[: , :, 0] != 0)
 
             xs, ys = xy_object
             for x, y in zip(xs, ys):
                 if i == 6:
                     palette = copy.deepcopy(self.palette)
-                    palette[i][0] -= 255 * sr_preds[x, y, -1]
-                    palette[i][1] -= 255 * sr_preds[x, y, -1]
+                    palette[i][0] -= 255 * sr_preds[x, y, 1]
+                    palette[i][1] -= 255 * sr_preds[x, y, 1]
                 vis_obs[x * self.grid_per_pixel: (x + 1) * self.grid_per_pixel,
                 y * self.grid_per_pixel : (y + 1) * self.grid_per_pixel, :] = palette[i]
 
@@ -268,3 +268,49 @@ class Visualizer:
             os.makedirs(os.path.join(self.output_dir, foldername))
         plt.savefig(output_file)
         plt.clf()
+
+    def tsne_consume_char_act(self, e_char, preference, act_preference, epoch,
+                                  foldername='consume_e_char_act_tsne'):
+            model = TSNE(2)
+            tsne_results = model.fit_transform(e_char)
+
+            most_prefer_action = []
+            # for i in range(len(act_preference)):
+            #     for j in range(5):
+            #         if act_preference[i][j] == 0:
+            #             del act_preference[i][j]
+            #             break
+            #         print(act_preference[i])
+            #     break
+            #
+            # for i in range(len(act_preference)):
+            #     for j in range(5):
+            #         act = np.setdiff1d(act_preference[i], [0])
+            #         print(act_preference[i])
+            #     break
+            #
+            for i in range(len(act_preference)):
+                act = act_preference[i][0]
+                if act == 0:
+                    act = act_preference[i][1]
+
+                most_prefer_action.append(act * 2)
+
+            color_palette = ['blue', 'magenta', 'orange', 'limegreen']
+            preference_index = np.argmax(preference, axis=-1)
+            # color_idx = preference_index * 4 + most_prefer_action - 1
+
+            al = np.max(preference, axis=-1)
+            colors = [color_palette[i] for i in preference_index]
+            plt.figure()
+            plt.scatter(tsne_results[:, 0], tsne_results[:, 1], s=most_prefer_action, alpha=al, c=colors)
+
+            tozero = len(str(self.max_epoch)) - len(str(epoch))
+
+            fn = tozero * '0' + str(epoch) + '.jpg'
+            output_file = os.path.join(self.output_dir, foldername, fn)
+
+            if not os.path.exists(os.path.join(self.output_dir, foldername)):
+                os.makedirs(os.path.join(self.output_dir, foldername))
+            plt.savefig(output_file)
+            plt.clf()
