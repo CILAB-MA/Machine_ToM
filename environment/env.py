@@ -102,7 +102,8 @@ class GridWorldEnv:
         info = dict(consumed=consumed)
         self.recent_reward = reward
         self.recent_done = done
-        return self.observation, reward, done, info
+        observation = copy.deepcopy(self.observation)
+        return observation, reward, done, info
 
     def _check_done(self):
         '''
