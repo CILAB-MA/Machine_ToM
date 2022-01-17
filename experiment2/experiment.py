@@ -123,7 +123,7 @@ def run_experiment(num_epoch, main_experiment, sub_experiment, num_agent, batch_
     train(tom_net, optimizer, train_loader, eval_loaders, experiment_folder, summary_writer, visualizer, num_agent, dicts)
 
     # Visualize Train
-    train_fixed_loader = DataLoader(train_dataset, batch_size=num_agent, shuffle=False)
+    train_fixed_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=False)
     tr_results = evaluate(tom_net, train_fixed_loader, visualizer, is_visualize=True, preference=train_prefer)
     # Test
     for i, (eval_loader, eval_prefer) in enumerate(zip(eval_loaders, eval_prefers)):
