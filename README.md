@@ -40,9 +40,9 @@ python agent/reward_seeking_agent.py
 In this experiment, we predict the future action, consumption, successor representation of value iteration agents. The number of walls is sampled between 0 and 4.
 
 There are three sub experiments. 
-  - first sub experiment : MToM with the full trajectory of an agent on single past MDP. Agent gets a panalty(-0.01) for every move.
-  - second sub experiment : MToM with partial trajectory(one step) of an agent on single past MDP. Agent gets panalty(-0.01) for every move.
-  - third sub experiment :  same as first sub experiment. But agent gets high panalty(-0.05) for every move.
+  -- first sub experiment : MToM with the full trajectory of an agent on single past MDP. Agent gets a panalty(-0.01) for every move.
+  -- second sub experiment : MToM with partial trajectory(one step) of an agent on single past MDP. Agent gets panalty(-0.01) for every move.
+  -- third sub experiment :  same as first sub experiment. But agent gets high panalty(-0.05) for every move.
 - Experiment 3:
 In this experiment, we predict the complex deep rl agent.
 
@@ -50,3 +50,9 @@ There are three sub agents.
   - 'fully' : The agent who get the fully observable information of gridworld
   - 'partial' : The agent who get the partial observable information of gridworld
   - 'blind' : The agent who get the none information of gridwolrd except action and reward of last state.
+## TODO
+[O] implement the deep rl agent (for experiment 3)
+[ ] implement the sub goal gridworld (for experiment 3)
+[ ] train the deep rl agent (for experiment 3)
+[ ] implement the mental network (for experiment 3)
+[ ] implement the deep DVIB (for experiment 3)
