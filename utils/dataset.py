@@ -25,6 +25,25 @@ class ToMDataset(Dataset):
             return self.episodes[ind], self.curr_state[ind], self.target_action[ind],\
                    self.target_prefer[ind], self.target_sr[ind], ind
 
+class Memory:
+    '''
+    for deep rl agent
+    '''
+    def __init__(self, batch_size, num_input):
+        self.obss = np.array()
+
+    def __len__(self):
+        return len(self.obss)
+
+    def reset(self):
+        self.obss = np.zeros(self.obss)
+        self.acts = np.zeros(self.acts)
+        self.rews = np.zeros(self.rews)
+        self.next_obss = np.zeros(self.next_obss)
+        self.pis = np.zeros(self.pis)
+        self.dones = np.zeros(self.dones)
+
+    def get_batch(self):
 
 def save_data(npy_data, is_train, base_dir, eval=None):
     keys = npy_data.keys()

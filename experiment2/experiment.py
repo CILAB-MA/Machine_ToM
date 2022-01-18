@@ -111,7 +111,7 @@ def run_experiment(num_epoch, main_experiment, sub_experiment, num_agent, batch_
         train_dataset = dataset.ToMDataset(**train_data)
         eval_dataset = dataset.ToMDataset(**eval_data)
         train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
-        eval_loader = DataLoader(eval_dataset, batch_size=num_agent, shuffle=False) #len(eval_dataset)
+        eval_loader = DataLoader(eval_dataset, batch_size=num_agent, shuffle=False)
         eval_loaders = [eval_loader]
         train_prefer = train_storage.true_preference
 

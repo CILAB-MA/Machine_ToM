@@ -15,8 +15,8 @@ def save_model(model, dicts, experiment_folder, epoch):
     for d in dkeys:
         vals = dicts[d]
         filename_str += '{}_{}_'.format(d, vals)
-    filename_str += 'epoch_{}'.format(epoch)
-    tr.save(model, '{}/{}'.format(model_path, filename_str))
+    filename_str += 'epoch_{}.pt'.format(epoch)
+    tr.save(model.state_dict(), '{}/{}'.format(model_path, filename_str))
 
 def make_folder():
     now = dt.datetime.now(gettz('Asia/Seoul'))
