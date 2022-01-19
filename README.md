@@ -52,7 +52,7 @@ There are three sub agents.
   - 'blind' : The agent who get the none information of gridwolrd except action and reward of last state.
 ## TODO
 - [x] implement the deep rl agent (for experiment 3)
-- [ ] implement the sub goal gridworld (for experiment 3)
+- [x] implement the sub goal gridworld (for experiment 3)
 - [ ] train the deep rl agent (for experiment 3)
 - [ ] implement the mental network (for experiment 3)
 - [ ] implement the deep DVIB (for experiment 3)

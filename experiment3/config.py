@@ -7,8 +7,7 @@ def get_configs(num_exp, max_step=51):
     if num_exp == 1:
         num_past = 4
         num_step = max_step
-        move_penalty = -0.01
-
+        move_penalty = -0.005
     else:
         assert ('You put the wrong exp_num.')
 

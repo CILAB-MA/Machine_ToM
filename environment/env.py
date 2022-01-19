@@ -11,19 +11,19 @@ class GridWorldEnv:
         3 : Orange
         4 : Green
         5 : Agent
+        -------------
+        0 : Black(Wall)
+        1 : Blue
+        2 : Pink
+        3 : Orange
+        4 : Green
+        5 : Sub-goal
+        6 : Agent
+        7 : Is_observable
         '''
-        self.observation_space = (config['height'], config['width'], 6)
         self.act_text = ['Stay', 'Down', 'Right', 'Up', 'Left']
         self.action_space = len(self.act_text)
         self.pixel_per_grid = config['pixel_per_grid']
-        self.color_palette = {
-            'BLUE': (0, 0, 255),
-            'PINK': (255, 0, 255),
-            'GREEN': (0, 255, 0),
-            'ORANGE': (255, 128, 0),
-            'WHITE': (255, 255, 255),
-            'BLACK': (0, 0, 0)
-            }
         self.preference = config['preference']
         self.prefer_reward = None
         self.epi_step = 0
@@ -32,34 +32,47 @@ class GridWorldEnv:
         self.height = config['height']
 
         self.exp = config['exp']
+
         if self.exp == 1:
             self.epi_max_step = 1
             self.num_wall = 0
+            num_channel = 6
+            self.goal_and_agent = num_channel - 1  # except wall
+            self.agent_dim = 5
         elif self.exp == 2:
             self.epi_max_step = 31
             self.num_wall = np.random.randint(5)
+            num_channel = 6
+            self.goal_and_agent = num_channel - 1 # except wall
+            self.agent_dim = 5
         elif self.exp == 3 or self.exp == 4 or self.exp == 5:
             self.epi_max_step = 51
             self.num_wall = 6
+            num_channel = 8
+            self.goal_and_agent = num_channel - 2  # except wall and unobservable
+            self.agent_dim = 6
         else:
             raise ValueError("Experiment index is not recognized")
+        self.observation_space = (config['height'], config['width'], num_channel)
 
     def reset(self, wall=False, custom=-100):
         self.epi_step = 0
         self.recent_action = None
         if np.sum(custom) > 0:
             self.observation = copy.deepcopy(custom)
-            self.agent_xy = [np.where(self.observation[:, :, 5] == 1)[0], np.where(self.observation[:, :, 5] == 1)[1]]
+            self.agent_xy = [np.where(self.observation[:, :, self.agent_dim] == 1)[0],
+                             np.where(self.observation[:, :, self.agent_dim] == 1)[1]]
             observation = copy.deepcopy(self.observation)
+            self.sub_consumed = False
             return observation
 
         self.observation = np.full(self.observation_space, 0)
         # Make Base Wall
-        goal_and_agent = self.observation.shape[-1] - 1  # except wall
         self.observation[0, :, 0] = 1
         self.observation[:, 0, 0] = 1
         self.observation[-1, :, 0] = 1
         self.observation[:, -1, 0] = 1
+        self.sub_consumed = False
 
         # Place the additional walls if exist
         if wall:
@@ -77,12 +90,12 @@ class GridWorldEnv:
 
         avail_x = np.where(self.observation[:, :, 0] == 0)[0]
         avail_y = np.where(self.observation[:, :, 0] == 0)[1]
-        rand_indices = np.random.choice(len(avail_x), goal_and_agent, replace=False)
+        rand_indices = np.random.choice(len(avail_x), self.goal_and_agent, replace=False)
         xs, ys = avail_x[rand_indices], avail_y[rand_indices]
         # Place the goals
         for i, (x, y) in enumerate(zip(xs, ys)):
             #print(x, y )
-            if i + 1 == 5:
+            if i + 1 == self.agent_dim:
                 self.agent_xy = [x, y]
             self.observation[x, y, i + 1] = 1
         observation = copy.deepcopy(self.observation)
@@ -92,10 +105,10 @@ class GridWorldEnv:
         self.recent_action = action
         self.prev_xy = copy.deepcopy(self.agent_xy)
         _move = self._int_to_axis_move(action)
-        self.observation[self.agent_xy[0], self.agent_xy[1], 5] = 0
+        self.observation[self.agent_xy[0], self.agent_xy[1], self.agent_dim] = 0
         self.agent_xy[0] += _move[0]
         self.agent_xy[1] += _move[1]
-        self.observation[self.agent_xy[0], self.agent_xy[1], 5] = 1
+        self.observation[self.agent_xy[0], self.agent_xy[1], self.agent_dim] = 1
         self.epi_step += 1
 
         reward, done, consumed = self._check_done()
@@ -107,29 +120,40 @@ class GridWorldEnv:
     def _check_done(self):
         '''
         The episode terminates if there is
-        - collision with a wall : r = -1
+        - collision with a wall : r = -0.05
         - consuming a goal
         - consuming preferred goal : r = 1
-        - after 31 steps
+        - after 31 or 51 steps
         '''
         done = False
         reward = -0.01
         consumed = None
-        if self.epi_step == self.epi_max_step:
+        if self.exp > 2:
+            num_check = self.observation_space[-1] - 2
+        else:
+            num_check = self.observation_space[-1] - 1
+        if self.epi_step == self.epi_max_step - 1:
             done = True
             reward = -0.01
         else:
-            for i in range(self.observation_space[-1] - 1):
+            for i in range(num_check):
                 if self.observation[self.agent_xy[0], self.agent_xy[1], i] == 1:
-                    done = True
-                    if i != 0:
-                        if i == self.preference:
-                            reward += self.prefer_reward[i - 1]
+                    if (self.exp > 2) and (i == 5):
+                        reward += 1
+                        self.observation[self.agent_xy[0], self.agent_xy[1], i] = 0
+                        self.sub_consumed = True
+                    elif i != 0:
+                        done = True
+                        if (self.exp > 2) and (self.sub_consumed == False):
+                            reward = 0
                         else:
                             reward += self.prefer_reward[i - 1]
                         consumed = i - 1
                     else:
                         reward += -0.05
+                        self.observation[self.agent_xy[0], self.agent_xy[1], self.agent_dim] = 0
+                        self.agent_xy = self.prev_xy
+                        self.observation[self.agent_xy[0], self.agent_xy[1], self.agent_dim] = 1
 
         return reward, done, consumed
 
@@ -161,12 +185,14 @@ class GridWorldEnv:
         checker2str = checker2str.replace('1', 'W').replace('2', 'B').replace('0', ' ')
         checker2str = checker2str.replace('3', 'P').replace('4','O').replace('5', 'G').replace('6', 'A')
         checker2str = checker2str.replace('[', ' ').replace(']', ' ')
+        if self.exp > 2:
+            checker2str = checker2str.replace('A', 'S').replace('7', 'A').replace('8', 'U')
         msg = divider + '\n' + info_msg + '\n' + checker2str + '\n' + divider
         print(msg)
 
 
 if __name__ == '__main__':
-    config = dict(height=25, width=25, pixel_per_grid=8, num_wall=1, preference=1, prefer_reward=[0, 0, 0, 1], exp=4, save=True)
+    config = dict(height=25, width=25, pixel_per_grid=8, num_wall=1, preference=1, prefer_reward=[0, 0, 0, 1], exp=2, save=True)
     env = GridWorldEnv(config)
     env.prefer_reward = [0, 1, 0, 0]
     env.most_prefer = 1
@@ -221,12 +247,42 @@ if __name__ == '__main__':
         env.reset(wall=True)
         env.obs_well_show()
 
-
     print('##############Check for Done Wall###############')
     map2 = copy.deepcopy(map)
-
 
     env.reset(custom=map2)
     env.obs_well_show()
     obs, _, _, _ , =  env.step(3)
     env.obs_well_show()
+
+    print('##############Check for Experiment3###############')
+    config = dict(height=11, width=11, pixel_per_grid=8, num_wall=1, preference=1,
+                  prefer_reward=[0, 0, 0, 1], exp=3, save=True)
+
+    env = GridWorldEnv(config)
+    # check wall collision
+    map = np.full((11, 11, 8), 0)
+    map[0, :, 0] = 1
+    map[:, 0, 0] = 1
+    map[-1, :, 0] = 1
+    map[:, -1, 0] = 1
+    # agent xy
+    map[1, 1, 6] = 1
+    # prefer xy
+    map[1, 2, 5] = 1
+    map[2, 2, 1] = 1
+    obs = env.reset(custom=map)
+    env.obs_well_show()
+    for i in range(51):
+        obs, rew, done, _ = env.step(2)
+        env.obs_well_show()
+        if done:
+            break
+
+
+
+
+
+
+
+
