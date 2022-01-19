@@ -67,7 +67,7 @@ class DeepRLAgent(BaseAgent):
         _, next_v = self.model(next_obss)
         q = rews + self.discount * (1 - dones) * next_v
         a = q - v
-        entropies =  -(pis.log() * pis).sum(1, keepdim=True)
+        entropies = -(pis.log() * pis).sum(1, keepdim=True)
         value_loss = value_criterion(v, q.detach())
         actor_loss = 0
         for i, pi in enumerate(pis):
@@ -95,13 +95,13 @@ def main(args):
             if num_episode % args.save_freq == 0:
                 agent.save_model()
             num_episode += 1
-            memory.reset()
         action, pi = agent.act(obs)
         next_obs, rew, done, _ = env.step(action)
         memory.add(obs, action, rew, next_obs, pi[action].cpu().numpy(), done)
 
         if len(memory) > args.batch_size:
             agent.train(memory)
+            memory.reset()
 
 if __name__ == '__main__':
     args = parse_args() # TODO : UPDATE THE ARGUMENT PARSER
