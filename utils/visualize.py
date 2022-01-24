@@ -3,10 +3,12 @@ import os, copy
 import numpy as np
 import cv2
 from sklearn.manifold import TSNE
+import wandb
+
 
 class Visualizer:
 
-    def __init__(self, output_dir, grid_per_pixel, max_epoch, height, width):
+    def __init__(self, output_dir, grid_per_pixel, max_epoch, height, width, wandb_log):
 
         self.palette = [(0, 0, 0), (255, 0, 0), (255, 0, 255), (0, 128 ,255), (0, 255, 0), (177, 206, 251), [255, 255, 255]]
         self.output_dir = output_dir
@@ -14,6 +16,7 @@ class Visualizer:
         self.grid_per_pixel = grid_per_pixel
         self.height = height
         self.width = width
+        self.wandb_log = wandb_log
 
     def _get_pt(self, x, y, action=0):
         left = (y * self.grid_per_pixel, x * self.grid_per_pixel + 4), (
@@ -39,7 +42,15 @@ class Visualizer:
         pt = np.array([pt])
         return pt
 
-    def get_past_traj(self, obs, agent_xys, past_actions, epoch, foldername='past_traj', sample_num=0):
+    def _save_dir(self, sample_num, foldername, fn):
+        output_file = os.path.join(self.output_dir, str(sample_num), foldername, fn)
+
+        if not os.path.exists(os.path.join(self.output_dir, str(sample_num), foldername)):
+            os.makedirs(os.path.join(self.output_dir, str(sample_num), foldername))
+
+        return output_file
+
+    def get_past_traj(self, obs, agent_xys, past_actions, filename, foldername='past_traj', sample_num=0):
 
         palette = copy.deepcopy(self.palette) #black, #blue, #pink, #orange, #green, #skin, # white
         vis_obs = np.full((self.grid_per_pixel * self.height,
@@ -70,18 +81,17 @@ class Visualizer:
                     vis_obs[x * self.grid_per_pixel: (x + 1) * self.grid_per_pixel,
                     y * self.grid_per_pixel : (y + 1) * self.grid_per_pixel, :] = palette[i]
 
-        tozero = len(str(self.max_epoch)) - len(str(epoch))
-
-        fn = tozero * '0' + str(epoch) + '.jpg'
-        output_file = os.path.join(self.output_dir, str(sample_num), foldername, fn)
-
-        if not os.path.exists(os.path.join(self.output_dir, str(sample_num), foldername)):
-            os.makedirs(os.path.join(self.output_dir, str(sample_num), foldername))
+        tozero = len(str(self.max_epoch)) - len(str(filename))
+        fn = tozero * '0' + str(filename) + '.jpg'
+        output_file = self._save_dir(sample_num, foldername, fn)
 
         cv2.imwrite(output_file, vis_obs)
 
+        save_name = foldername + "_" + filename
+        if self.wandb_log:
+            wandb.log({save_name: wandb.Image(vis_obs)})
 
-    def get_curr_state(self, obs, epoch, foldername='current_state', sample_num=0):
+    def get_curr_state(self, obs, filename, foldername='current_state', sample_num=0):
         palette = copy.deepcopy(self.palette)
         vis_obs = np.full((self.grid_per_pixel * self.height,
                            self.grid_per_pixel * self.width, 3),
@@ -94,52 +104,57 @@ class Visualizer:
                 vis_obs[x * self.grid_per_pixel: (x + 1) * self.grid_per_pixel,
                 y * self.grid_per_pixel: (y + 1) * self.grid_per_pixel, :] = palette[i]
 
-        tozero = len(str(self.max_epoch)) - len(str(epoch))
+        tozero = len(str(self.max_epoch)) - len(str(filename))
 
-        fn = tozero * '0' + str(epoch) + '.jpg'
-        output_file = os.path.join(self.output_dir, str(sample_num), foldername, fn)
+        fn = tozero * '0' + str(filename) + '.jpg'
+        output_file = self._save_dir(sample_num, foldername, fn)
 
-        if not os.path.exists(os.path.join(self.output_dir, str(sample_num), foldername)):
-            os.makedirs(os.path.join(self.output_dir, str(sample_num), foldername))
         cv2.imwrite(output_file, vis_obs)
 
-    def get_action(self, action_preds, epoch, foldername='action', sample_num=0):
+        save_name = foldername + "_" + filename
+        if self.wandb_log:
+            wandb.log({save_name: wandb.Image(vis_obs)})
+
+    def get_action(self, action_preds, filename, foldername='action', sample_num=0):
         plt.figure()
-        plt.ylabel('Prob')
-        x = np.arange(5)
-        plt.bar(x, np.exp(action_preds))
-        plt.xticks(x, ['˚', '↓', '→', '↑', '←'])
-        tozero = len(str(self.max_epoch)) - len(str(epoch))
+        # plt.ylabel('Prob')
+        # x = np.arange(5)
+        # plt.bar(x, np.exp(action_preds))
+        # plt.xticks(x, ['˚', '↓', '→', '↑', '←'])
+        # tozero = len(str(self.max_epoch)) - len(str(filename))
+        #
+        # fn = tozero * '0' + str(filename) + '.jpg'
+        # output_file = self._save_dir(sample_num, foldername, fn)
+        #
+        # plt.savefig(output_file)
+        # plt.clf()
+        plt.plot([1, 2, 3, 4])
+        plt.ylabel("some interesting numbers")
+        save_name = foldername + "_" + filename
+        if self.wandb_log:
+            wandb.log({save_name: wandb.Image(plt)})
 
-        fn = tozero * '0' + str(epoch) + '.jpg'
-        output_file = os.path.join(self.output_dir, str(sample_num), foldername, fn)
-
-        if not os.path.exists(os.path.join(self.output_dir, str(sample_num), foldername)):
-            os.makedirs(os.path.join(self.output_dir, str(sample_num), foldername))
-
-        plt.savefig(output_file)
-        plt.clf()
-
-    def get_prefer(self, consumed_preds, epoch, foldername='consumed', sample_num=0):
+    def get_prefer(self, consumed_preds, filename, foldername='consumed', sample_num=0):
         plt.figure()
         plt.ylabel('Prob')
         x = np.arange(5)
         plt.bar(x, np.exp(consumed_preds), color=['b', 'magenta', 'orange', 'g', 'black'])
         plt.xticks(x, ['Blue', 'Pink', 'Orange', 'Green', 'None'])
 
-        tozero = len(str(self.max_epoch)) - len(str(epoch))
+        tozero = len(str(self.max_epoch)) - len(str(filename))
 
 
-        fn = tozero * '0' + str(epoch) + '.jpg'
-        output_file = os.path.join(self.output_dir, str(sample_num), foldername, fn)
-
-        if not os.path.exists(os.path.join(self.output_dir, str(sample_num), foldername)):
-            os.makedirs(os.path.join(self.output_dir, str(sample_num), foldername))
+        fn = tozero * '0' + str(filename) + '.jpg'
+        output_file = self._save_dir(sample_num, foldername, fn)
 
         plt.savefig(output_file)
         plt.clf()
 
-    def get_sr(self, obs, sr_preds, epoch, foldername='sr', sample_num=0):
+        save_name = foldername + "_" + filename
+        if self.wandb_log:
+            wandb.log({save_name: wandb.Image(plt)})
+
+    def get_sr(self, obs, sr_preds, filename, foldername='sr', sample_num=0):
         palette = copy.deepcopy(self.palette)
         vis_obs = np.full((self.grid_per_pixel * self.height,
                            self.grid_per_pixel * self.width, 3),
@@ -159,33 +174,36 @@ class Visualizer:
                 vis_obs[x * self.grid_per_pixel: (x + 1) * self.grid_per_pixel,
                 y * self.grid_per_pixel : (y + 1) * self.grid_per_pixel, :] = palette[i]
 
-        tozero = len(str(self.max_epoch)) - len(str(epoch))
+        tozero = len(str(self.max_epoch)) - len(str(filename))
 
-        fn = tozero * '0' + str(epoch) + '.jpg'
-        output_file = os.path.join(self.output_dir, str(sample_num), foldername, fn)
-
-        if not os.path.exists(os.path.join(self.output_dir, str(sample_num), foldername)):
-            os.makedirs(os.path.join(self.output_dir, str(sample_num), foldername))
+        fn = tozero * '0' + str(filename) + '.jpg'
+        output_file = self._save_dir(sample_num, foldername, fn)
 
         cv2.imwrite(output_file, vis_obs)
 
-    def get_action_char(self, e_char, most_act, count_act, epoch, foldername='action_e_char'):
+        save_name = foldername + "_" + filename
+        if self.wandb_log:
+            wandb.log({save_name: wandb.Image(vis_obs)})
+
+    def get_action_char(self, e_char, most_act, count_act, filename, foldername='action_e_char'):
         color_palette = np.array([[0, 0, 1], [1, 0, 0], [0, 1, 0], [1, 1, 0], [204 / 255, 0, 204 / 255]])
         colors = color_palette[most_act] * np.reshape(count_act, (-1, 1))
         plt.figure()
         plt.scatter(e_char[:, 0], e_char[:, 1], c=colors)
 
-        tozero = len(str(self.max_epoch)) - len(str(epoch))
+        tozero = len(str(self.max_epoch)) - len(str(filename))
 
-        fn = tozero * '0' + str(epoch) + '.jpg'
-        output_file = os.path.join(self.output_dir,  foldername, fn)
+        fn = tozero * '0' + str(filename) + '.jpg'
+        output_file = self._save_dir("", foldername, fn)
 
-        if not os.path.exists(os.path.join(self.output_dir, foldername)):
-            os.makedirs(os.path.join(self.output_dir, foldername))
         plt.savefig(output_file)
         plt.clf()
 
-    def get_consume_char(self, e_char, preference, epoch, foldername='consume_e_char'):
+        save_name = foldername + "_" + filename
+        if self.wandb_log:
+            wandb.log({save_name: wandb.Image(plt)})
+
+    def get_consume_char(self, e_char, preference, filename, foldername='consume_e_char'):
         color_palette = ['blue', 'magenta', 'orange', 'limegreen', 'black']
         preference_index = np.argmax(preference, axis=-1)
 
@@ -194,18 +212,19 @@ class Visualizer:
         plt.scatter(e_char[:, 0], e_char[:, 1], c=colors)
 
 
-        tozero = len(str(self.max_epoch)) - len(str(epoch))
+        tozero = len(str(self.max_epoch)) - len(str(filename))
 
-        fn = tozero * '0' + str(epoch) + '.jpg'
-        output_file = os.path.join(self.output_dir, foldername, fn)
+        fn = tozero * '0' + str(filename) + '.jpg'
+        output_file = self._save_dir("", foldername, fn)
 
-        if not os.path.exists(os.path.join(self.output_dir, foldername)):
-            os.makedirs(os.path.join(self.output_dir, foldername))
         plt.savefig(output_file)
         plt.clf()
 
+        save_name = foldername + "_" + filename
+        if self.wandb_log:
+            wandb.log({save_name: wandb.Image(plt)})
 
-    def tsne_consume_char(self, e_char, preference, epoch, foldername='consume_e_char_tsne'):
+    def tsne_consume_char(self, e_char, preference, filename, foldername='consume_e_char_tsne'):
         model = TSNE(2)
         tsne_results = model.fit_transform(e_char)
 
@@ -217,15 +236,17 @@ class Visualizer:
         plt.figure()
         plt.scatter(tsne_results[:, 0], tsne_results[:, 1], s=5, alpha=al, c=colors)
 
-        tozero = len(str(self.max_epoch)) - len(str(epoch))
+        tozero = len(str(self.max_epoch)) - len(str(filename))
 
-        fn = tozero * '0' + str(epoch) + '.jpg'
-        output_file = os.path.join(self.output_dir, foldername, fn)
+        fn = tozero * '0' + str(filename) + '.jpg'
+        output_file = self._save_dir("", foldername, fn)
 
-        if not os.path.exists(os.path.join(self.output_dir, foldername)):
-            os.makedirs(os.path.join(self.output_dir, foldername))
         plt.savefig(output_file)
         plt.clf()
+
+        save_name = foldername + "_" + filename
+        if self.wandb_log:
+            wandb.log({save_name: wandb.Image(plt)})
 
 
 if __name__ == '__main__':

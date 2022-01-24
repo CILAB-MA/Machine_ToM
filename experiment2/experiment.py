@@ -14,6 +14,8 @@ from torch.utils.data import DataLoader
 import torch as tr
 import numpy as np
 import glob
+import wandb
+
 
 def train(tom_net, optimizer, train_loader, eval_loaders, experiment_folder, writer, visualizer, num_agent, dicts):
     for epoch in range(dicts['num_epoch']):
@@ -23,7 +25,13 @@ def train(tom_net, optimizer, train_loader, eval_loaders, experiment_folder, wri
             epoch, results['total_loss'], results['consumption_loss'], results['action_loss'],
             results['sr_loss'], results['action_acc'], results['consumption_acc']
         )
+
         print(train_msg)
+        if dicts['wandb_log']:
+            wandb.log({'train_total_loss': results['total_loss'], 'train_consumption_loss': results['consumption_loss'],
+                       'train_action_loss': results['action_loss'], 'train_sr_loss': results['sr_loss'],
+                       'train_action_acc': results['action_acc'], 'train_consumption_acc': results['consumption_acc']})
+
         writer.write(results, epoch, is_train=True)
         for e, eval_loader in enumerate(eval_loaders):
             ev_results = evaluate(tom_net, eval_loader, num_agent=int(num_agent / 5))
@@ -32,6 +40,11 @@ def train(tom_net, optimizer, train_loader, eval_loaders, experiment_folder, wri
                 ev_results['sr_loss'], ev_results['action_acc'], ev_results['consumption_acc'])
 
             print(eval_msg)
+            if dicts['wandb_log']:
+                wandb.log({'eval_total_loss': ev_results['total_loss'], 'eval_consumption_loss': ev_results['consumption_loss'],
+                           'eval_action_loss': ev_results['action_loss'], 'eval_sr_loss': ev_results['sr_loss'],
+                           'eval_action_acc': ev_results['action_acc'], 'eval_consumption_acc': ev_results['consumption_acc']})
+
             writer.write(ev_results, epoch, is_train=False, num_eval=e)
 
         if epoch % dicts['save_freq'] == 0:
@@ -67,13 +80,13 @@ def evaluate(tom_net, eval_loader, visualizer=None, is_visualize=False,
             visualizer.get_sr(ev_results['curr_state'][n], ev_targs['targ_sr'][n], filename + '_targ', sample_num=n)
 
 
-        visualizer.get_consume_char(ev_results['e_char'], preference, filename)
-        visualizer.tsne_consume_char(ev_results['e_char'], preference, filename)
+        # visualizer.get_consume_char(ev_results['e_char'], preference, filename)
+        # visualizer.tsne_consume_char(ev_results['e_char'], preference, filename)
     return ev_results
 
 
 def run_experiment(num_epoch, main_experiment, sub_experiment, num_agent, batch_size, lr,
-                   experiment_folder, alpha, save_freq, train_dir, eval_dir):
+                   experiment_folder, alpha, save_freq, train_dir, eval_dir, wandb_log):
 
 
     exp_kwargs, env_kwargs, model_kwargs, agent_type = get_configs(sub_experiment)
@@ -84,7 +97,7 @@ def run_experiment(num_epoch, main_experiment, sub_experiment, num_agent, batch_
     if model_kwargs['device'] == 'cuda':
         tom_net = tom_net.cuda()
     dicts = dict(main=main_experiment, sub=sub_experiment, alpha=alpha, batch_size=batch_size,
-                 lr=lr, num_epoch=num_epoch, save_freq=save_freq)
+                 lr=lr, num_epoch=num_epoch, save_freq=save_freq, wandb_log=wandb_log)
     if train_dir != 'none':
         eval_dirs = glob.glob(eval_dir + '*')
         train_dataset = make_dataset(train_dir)
@@ -117,7 +130,7 @@ def run_experiment(num_epoch, main_experiment, sub_experiment, num_agent, batch_
 
     summary_writer = writer.Writer(os.path.join(experiment_folder, 'logs'))
     visualizer = Visualizer(os.path.join(experiment_folder, 'images'), grid_per_pixel=8,
-                            max_epoch=num_epoch, height=env.height, width=env.width)
+                            max_epoch=num_epoch, height=env.height, width=env.width, wandb_log=wandb_log)
     # Train
     optimizer = optim.Adam(tom_net.parameters(), lr=lr)
     train(tom_net, optimizer, train_loader, eval_loaders, experiment_folder, summary_writer, visualizer, num_agent, dicts)

@@ -1,3 +1,6 @@
 /.idea
 *.pyc
 /results
+/wandb
+/images
+/data
