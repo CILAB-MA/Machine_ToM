@@ -6,7 +6,7 @@ from sklearn.manifold import TSNE
 
 class Visualizer:
 
-    def __init__(self, output_dir, grid_per_pixel, max_epoch, height, width):
+    def __init__(self, output_dir, grid_per_pixel, max_epoch, height, width, problem='mtom'):
 
         self.palette = [(0, 0, 0), (255, 0, 0), (255, 0, 255), (0, 128 ,255), (0, 255, 0), (177, 206, 251), [255, 255, 255]]
         self.output_dir = output_dir
@@ -14,6 +14,8 @@ class Visualizer:
         self.grid_per_pixel = grid_per_pixel
         self.height = height
         self.width = width
+        self.problem_type = dict(mtom=6, gtom=5)
+        self.problem = problem
 
     def _get_pt(self, x, y, action=0):
         left = (y * self.grid_per_pixel, x * self.grid_per_pixel + 4), (
@@ -46,7 +48,7 @@ class Visualizer:
                            self.grid_per_pixel * self.width, 3),
                           255, dtype=np.uint8)
 
-        for i in range(7):
+        for i in range(self.problem_type[self.problem] + 1):
             if i != 6:  # env(0, 1, 2, 3, 4), agent(5)
                 xy_object = np.where(obs[:, :, i] == 1)
                 xs, ys = xy_object
@@ -86,9 +88,9 @@ class Visualizer:
         vis_obs = np.full((self.grid_per_pixel * self.height,
                            self.grid_per_pixel * self.width, 3),
                           255, dtype=np.uint8)
-        for i in range(6):
+        for i in range(self.problem_type[self.problem]):
             xy_object = np.where(obs[:, :, i] == 1)
-
+            print(xy_object)
             xs, ys = xy_object
             for x, y in zip(xs, ys):
                 vis_obs[x * self.grid_per_pixel: (x + 1) * self.grid_per_pixel,
@@ -144,7 +146,7 @@ class Visualizer:
         vis_obs = np.full((self.grid_per_pixel * self.height,
                            self.grid_per_pixel * self.width, 3),
                           255, dtype=np.uint8)
-        for i in range(6, 0 , -1):
+        for i in range(self.problem_type[self.problem], 0 , -1):
             if i != 6:
                 xy_object = np.where(obs[:, :, i] == 1)
             else:
